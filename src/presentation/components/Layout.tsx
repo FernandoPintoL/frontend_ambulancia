@@ -4,9 +4,10 @@
  */
 
 import { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiTruck, FiMapPin, FiActivity, FiMenu, FiX } from 'react-icons/fi';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FiHome, FiTruck, FiMapPin, FiActivity, FiMenu, FiX, FiLogOut, FiUser } from 'react-icons/fi';
 import { useState } from 'react';
+import { useAuthStore } from '../../application/store/auth-store';
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,6 +16,13 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: FiHome },
@@ -66,8 +74,32 @@ const Layout = ({ children }: LayoutProps) => {
           ))}
         </nav>
 
+        {/* User Profile */}
+        {user && (
+          <div className="p-6 border-t border-slate-700">
+            <div className="mb-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                  <FiUser className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              <FiLogOut />
+              Cerrar Sesión
+            </button>
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="p-6 border-t border-slate-700">
+        <div className="p-6 border-t border-slate-700 text-center">
           <p className="text-sm text-gray-400">v1.0.0</p>
         </div>
       </aside>

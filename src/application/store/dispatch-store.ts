@@ -5,8 +5,9 @@
 
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { Dispatch } from '@repositories/dispatch-repository';
-import { dispatchService } from '@services/dispatch-service';
+import { Dispatch } from '../../data/repositories/dispatch-repository';
+import { dispatchService } from '../services/dispatch-service';
+import { dispatchRepository } from '../../data/repositories/dispatch-repository';
 
 interface DispatchState {
   // State
@@ -44,10 +45,7 @@ export const useDispatchStore = create<DispatchState>()(
     loadDispatches: async (status?: string, limit: number = 20) => {
       set({ loading: true, error: null });
       try {
-        const dispatches = await dispatchService['dispatchRepository'].listDispatches(
-          status,
-          limit
-        );
+        const dispatches = await dispatchRepository.listDispatches(status, limit);
         set({ dispatches });
       } catch (error) {
         set({ error: error instanceof Error ? error.message : 'Unknown error' });

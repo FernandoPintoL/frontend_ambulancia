@@ -4,13 +4,11 @@
  */
 
 import { useEffect } from 'react';
-import { useDispatch } from '@hooks/useDispatch';
-import { usePredictions } from '@hooks/usePredictions';
-import { FiBarChart3, FiTruck, FiAlertCircle, FiCheck } from 'react-icons/fi';
+import { useDispatch } from '../../application/hooks/useDispatch';
+import { FiBarChart, FiTruck, FiAlertCircle, FiCheck } from 'react-icons/fi';
 
 const DashboardPage = () => {
   const { loadRecentDispatches, dispatches } = useDispatch();
-  const { getModelsHealth, loading: healthLoading } = usePredictions();
 
   useEffect(() => {
     loadRecentDispatches(24);
@@ -34,7 +32,7 @@ const DashboardPage = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Dispatches', value: stats.total, icon: FiBarChart3, color: 'blue' },
+          { label: 'Total Dispatches', value: stats.total, icon: FiBarChart, color: 'blue' },
           { label: 'Pending', value: stats.pending, icon: FiAlertCircle, color: 'yellow' },
           { label: 'In Transit', value: stats.inTransit, icon: FiTruck, color: 'orange' },
           { label: 'Completed', value: stats.completed, icon: FiCheck, color: 'green' },

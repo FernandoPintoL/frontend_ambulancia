@@ -4,8 +4,7 @@
  */
 
 import { useCallback, useState } from 'react';
-import { useDispatchStore } from '@store/dispatch-store';
-import { Dispatch } from '@repositories/dispatch-repository';
+import { useDispatchStore } from '../store/dispatch-store';
 
 /**
  * Hook to manage dispatch operations

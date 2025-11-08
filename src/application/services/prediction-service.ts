@@ -5,10 +5,7 @@
 
 import {
   predictionRepository,
-  SeverityPrediction,
-  ETAPrediction,
-  DispatchPrediction,
-} from '@repositories/prediction-repository';
+} from '../../data/repositories/prediction-repository';
 
 /**
  * Severity level categorization

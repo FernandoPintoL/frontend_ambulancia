@@ -6,13 +6,12 @@
 import {
   dispatchRepository,
   Dispatch,
-  DispatchStatistics,
-} from '@repositories/dispatch-repository';
+} from '../../data/repositories/dispatch-repository';
 import {
   ambulanceRepository,
   Ambulance,
-} from '@repositories/ambulance-repository';
-import { predictionRepository } from '@repositories/prediction-repository';
+} from '../../data/repositories/ambulance-repository';
+import { predictionRepository } from '../../data/repositories/prediction-repository';
 
 /**
  * Dispatch Service - handles all dispatch-related business logic
@@ -155,7 +154,7 @@ export class DispatchService {
    * Suggest optimal ambulance for dispatch
    */
   async suggestAmbulance(
-    dispatchId: string,
+    _dispatchId: string,
     patientLat: number,
     patientLon: number
   ) {

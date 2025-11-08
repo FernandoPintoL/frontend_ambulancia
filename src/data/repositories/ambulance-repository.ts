@@ -10,9 +10,11 @@ import {
   GET_AVAILABLE_AMBULANCES,
   GET_FLEET_STATUS,
   GET_AMBULANCE_STATS,
+} from './queries';
+import {
   UPDATE_AMBULANCE_LOCATION,
   SET_AMBULANCE_STATUS,
-} from './queries';
+} from './mutations';
 
 export interface Location {
   latitude: number;

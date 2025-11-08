@@ -9,12 +9,14 @@ import {
   LIST_DISPATCHES,
   GET_RECENT_DISPATCHES,
   GET_DISPATCH_STATISTICS,
+} from './queries';
+import {
   CREATE_DISPATCH,
   UPDATE_DISPATCH_STATUS,
   ASSIGN_AMBULANCE,
   ADD_DISPATCH_FEEDBACK,
   OPTIMIZE_DISPATCH,
-} from './queries';
+} from './mutations';
 
 export interface Dispatch {
   id: string;

@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useState } from 'react';
-import { predictionService } from '@services/prediction-service';
+import { predictionService } from '../services/prediction-service';
 
 /**
  * Hook to manage ML prediction operations

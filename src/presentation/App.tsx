@@ -37,7 +37,7 @@ export default function App() {
   }, [token, setUser]);
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Toaster
         position="top-right"
         reverseOrder={false}

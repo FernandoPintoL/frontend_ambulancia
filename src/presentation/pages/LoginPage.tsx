@@ -109,16 +109,23 @@ export default function LoginPage() {
         {/* Credenciales demo */}
         <div className="mt-8 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-600 text-center mb-3">
-            Para desarrollo, usa cualquier email y contraseña:
+            Credenciales de prueba disponibles:
           </p>
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <div>
-              <p className="text-xs text-gray-500">Email:</p>
-              <p className="text-sm font-mono text-gray-700">dispatcher@example.com</p>
+              <p className="text-xs font-semibold text-gray-700 mb-1">Paramedic:</p>
+              <p className="text-xs text-gray-600">📧 paramedic@ambulancia.local</p>
+              <p className="text-xs text-gray-600">🔐 paramedic@123456</p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Contraseña:</p>
-              <p className="text-sm font-mono text-gray-700">cualquiera</p>
+            <div className="border-t pt-3">
+              <p className="text-xs font-semibold text-gray-700 mb-1">Dispatcher:</p>
+              <p className="text-xs text-gray-600">📧 dispatcher@ambulancia.local</p>
+              <p className="text-xs text-gray-600">🔐 dispatcher@123456</p>
+            </div>
+            <div className="border-t pt-3">
+              <p className="text-xs font-semibold text-gray-700 mb-1">Admin:</p>
+              <p className="text-xs text-gray-600">📧 admin@ambulancia.local</p>
+              <p className="text-xs text-gray-600">🔐 admin@123456</p>
             </div>
           </div>
         </div>

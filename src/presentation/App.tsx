@@ -18,6 +18,7 @@ import DispatchesPage from './pages/DispatchesPage';
 import CreateDispatchPage from './pages/CreateDispatchPage';
 import DispatchDetailsPage from './pages/DispatchDetailsPage';
 import TrackingHistoryPage from './pages/TrackingHistoryPage';
+import PersonalPage from './pages/PersonalPage';
 import AmbulancesPage from './pages/AmbulancesPage';
 import HealthPage from './pages/HealthPage';
 
@@ -77,6 +78,9 @@ export default function App() {
                   <Route path="/dispatches/new" element={<CreateDispatchPage />} />
                   <Route path="/dispatches/:id" element={<DispatchDetailsPage />} />
                   <Route path="/dispatches/:id/tracking" element={<TrackingHistoryPage />} />
+
+                  {/* Personal */}
+                  <Route path="/personal" element={<PersonalPage />} />
 
                   {/* Ambulances */}
                   <Route path="/ambulances" element={<AmbulancesPage />} />

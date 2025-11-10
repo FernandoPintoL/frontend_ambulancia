@@ -29,6 +29,7 @@ const Layout = ({ children }: LayoutProps) => {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: FiHome },
     { path: '/dispatches', label: 'Dispatches', icon: FiMapPin },
+    { path: '/personal', label: 'Personal', icon: FiUser },
     { path: '/ambulances', label: 'Ambulances', icon: FiTruck },
     { path: '/health', label: 'Health', icon: FiActivity },
   ];

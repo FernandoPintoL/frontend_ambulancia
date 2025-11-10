@@ -102,7 +102,7 @@ export class DispatchService {
   async getDispatchOverview(hours: number = 24) {
     const [recentDispatches, statistics] = await Promise.all([
       dispatchRepository.getRecentDispatches(hours, 100),
-      dispatchRepository.getDispatchStatistics(hours),
+      dispatchRepository.getDispatchStatistics(),
     ]);
 
     return {

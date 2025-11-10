@@ -118,7 +118,7 @@ export const useDispatchStore = create<DispatchState>()(
         await dispatchService.completeDispatch(dispatchId, feedback);
         set((state) => ({
           dispatches: state.dispatches.map((d) =>
-            d.id === dispatchId ? { ...d, status: 'completed' } as any : d
+            d.id === dispatchId ? ({ ...d, status: 'completed' } as any) : d
           ),
         }));
       } catch (error) {
@@ -154,8 +154,8 @@ export const initializeWebSocketListeners = () => {
   websocketService.subscribe('dispatch_status_changed', (data: any) => {
     const { dispatchId, status } = data;
     useDispatchStore.setState((state) => ({
-      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status } as any : d)),
-      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status } as any : state.selectedDispatch,
+      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? ({ ...d, status } as any) : d)),
+      selectedDispatch: state.selectedDispatch?.id === dispatchId ? ({ ...state.selectedDispatch, status } as any) : state.selectedDispatch,
     }));
   });
 
@@ -163,8 +163,8 @@ export const initializeWebSocketListeners = () => {
   websocketService.subscribe('dispatch_completed', (data: any) => {
     const { dispatchId } = data;
     useDispatchStore.setState((state) => ({
-      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status: 'completed' } as any : d)),
-      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status: 'completed' } as any : state.selectedDispatch,
+      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? ({ ...d, status: 'completed' } as any) : d)),
+      selectedDispatch: state.selectedDispatch?.id === dispatchId ? ({ ...state.selectedDispatch, status: 'completed' } as any) : state.selectedDispatch,
     }));
   });
 
@@ -172,24 +172,28 @@ export const initializeWebSocketListeners = () => {
   websocketService.subscribe('dispatch_created', (data: any) => {
     const { dispatch } = data;
     useDispatchStore.setState((state) => ({
-      dispatches: [dispatch, ...state.dispatches],
+      dispatches: [dispatch as any, ...state.dispatches],
     }));
   });
 
   // Listen for ambulance location updates
   websocketService.subscribe('ambulance_location_updated', (data: any) => {
     const { ambulanceId, location } = data;
-    useDispatchStore.setState((state) => ({
-      selectedDispatch: state.selectedDispatch?.ambulance?.id === ambulanceId
-        ? {
-            ...state.selectedDispatch,
-            ambulance: {
-              ...state.selectedDispatch.ambulance,
-              currentLocation: location,
-            },
-          }
-        : state.selectedDispatch,
-    }));
+    useDispatchStore.setState((state) => {
+      if (!state.selectedDispatch?.ambulance || state.selectedDispatch.ambulance.id !== ambulanceId) {
+        return {};
+      }
+
+      return {
+        selectedDispatch: {
+          ...state.selectedDispatch,
+          ambulance: {
+            ...state.selectedDispatch.ambulance,
+            currentLocation: location,
+          },
+        } as any,
+      };
+    });
   });
 
   console.log('WebSocket listeners initialized');

@@ -79,51 +79,51 @@ class WebSocketService {
         });
 
         // Dispatch events
-        this.socket.on('dispatch_created', (data) => {
+        this.socket.on('dispatch_created', (data: any) => {
           console.log('Dispatch created event:', data);
           this.emit('dispatch_created', data);
         });
 
-        this.socket.on('dispatch_status_changed', (data) => {
+        this.socket.on('dispatch_status_changed', (data: any) => {
           console.log('Dispatch status changed event:', data);
           this.emit('dispatch_status_changed', data);
         });
 
-        this.socket.on('dispatch_completed', (data) => {
+        this.socket.on('dispatch_completed', (data: any) => {
           console.log('Dispatch completed event:', data);
           this.emit('dispatch_completed', data);
         });
 
         // Ambulance events
-        this.socket.on('ambulance_location_updated', (data) => {
+        this.socket.on('ambulance_location_updated', (data: any) => {
           console.log('Ambulance location updated event:', data);
           this.emit('ambulance_location_updated', data);
         });
 
         // Personal events
-        this.socket.on('personal_created', (data) => {
+        this.socket.on('personal_created', (data: any) => {
           console.log('Personal created event:', data);
           this.emit('personal_created', data);
         });
 
-        this.socket.on('personal_updated', (data) => {
+        this.socket.on('personal_updated', (data: any) => {
           console.log('Personal updated event:', data);
           this.emit('personal_updated', data);
         });
 
-        this.socket.on('personal_status_changed', (data) => {
+        this.socket.on('personal_status_changed', (data: any) => {
           console.log('Personal status changed event:', data);
           this.emit('personal_status_changed', data);
         });
 
         // Error handler
-        this.socket.on('connect_error', (error) => {
+        this.socket.on('connect_error', (error: any) => {
           console.error('Socket.IO connection error:', error);
           this.emit('error', { message: `Connection error: ${error.message}` });
         });
 
         // Disconnect handler
-        this.socket.on('disconnect', (reason) => {
+        this.socket.on('disconnect', (reason: any) => {
           console.log('Socket.IO disconnected:', reason);
           this.emit('disconnected');
         });

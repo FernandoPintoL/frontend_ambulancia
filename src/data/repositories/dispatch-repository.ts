@@ -170,10 +170,17 @@ class DispatchRepository {
   /**
    * Record GPS location for dispatch
    */
-  async recordGpsLocation(dispatchId: string, latitude: number, longitude: number, speed?: number): Promise<any> {
+  async recordGpsLocation(
+    dispatchId: string,
+    latitude: number,
+    longitude: number,
+    speed?: number,
+    altitude?: number,
+    precision?: number
+  ): Promise<any> {
     const { recordGpsLocation } = await graphqlClient.request<{ recordGpsLocation: any }>(
       RECORD_GPS_LOCATION,
-      { dispatchId, latitude, longitude, speed }
+      { dispatchId, latitude, longitude, speed, altitude, precision }
     );
     return recordGpsLocation;
   }

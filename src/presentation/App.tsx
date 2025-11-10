@@ -6,6 +6,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '../application/store/auth-store';
+import { initializeWebSocketListeners } from '../application/store/dispatch-store';
 import { useEffect } from 'react';
 
 import Layout from './components/Layout';
@@ -35,6 +36,11 @@ export default function App() {
       }
     }
   }, [token, setUser]);
+
+  // Initialize WebSocket listeners for real-time updates
+  useEffect(() => {
+    initializeWebSocketListeners();
+  }, []);
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

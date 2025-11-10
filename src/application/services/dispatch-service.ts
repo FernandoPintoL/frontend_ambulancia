@@ -141,6 +141,7 @@ export class DispatchService {
       'at_patient',
       'returning',
       'completed',
+      'cancelled',
     ];
 
     if (!validStatuses.includes(newStatus)) {

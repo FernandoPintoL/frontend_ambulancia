@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FiArrowLeft } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { useDispatch } from '../../application/hooks/useDispatch';
 
 const dispatchSchema = z.object({
   patientName: z.string().min(1, 'Nombre requerido'),
@@ -19,7 +20,8 @@ const dispatchSchema = z.object({
 type DispatchFormData = z.infer<typeof dispatchSchema>;
 
 export default function CreateDispatchPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { createDispatch, loading } = useDispatch();
   const { register, handleSubmit, formState: { errors }, reset } = useForm<DispatchFormData>({
     resolver: zodResolver(dispatchSchema),
     defaultValues: {
@@ -31,17 +33,27 @@ export default function CreateDispatchPage() {
 
   const onSubmit = async (data: DispatchFormData) => {
     try {
-      setIsSubmitting(true);
-      // TODO: Implement actual GraphQL mutation
-      console.log('Submit:', data);
-      toast.success('Despacho creado exitosamente');
+      // Create dispatch with GraphQL mutation
+      const result = await createDispatch({
+        patientName: data.patientName,
+        patientAge: data.patientAge,
+        patientLat: data.patientLat,
+        patientLon: data.patientLon,
+        description: data.description,
+        severityLevel: data.severityLevel,
+      });
+
+      toast.success(`Despacho creado exitosamente. ID: ${result.dispatch.id}`);
       reset();
-      // TODO: Redirect to dispatches page
+
+      // Redirect to dispatches page after 1.5 seconds
+      setTimeout(() => {
+        navigate('/dispatches');
+      }, 1500);
     } catch (error) {
-      toast.error('Error al crear despacho');
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear despacho';
+      toast.error(errorMessage);
+      console.error('Error creating dispatch:', error);
     }
   };
 
@@ -176,8 +188,8 @@ export default function CreateDispatchPage() {
             <a href="/dispatches" className="btn-secondary">
               Cancelar
             </a>
-            <button type="submit" disabled={isSubmitting} className="btn-primary">
-              {isSubmitting ? 'Creando...' : 'Crear Despacho'}
+            <button type="submit" disabled={loading} className="btn-primary">
+              {loading ? 'Creando...' : 'Crear Despacho'}
             </button>
           </div>
         </form>

@@ -1,50 +1,47 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FiArrowLeft, FiMapPin, FiPhone, FiClock } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { useDispatch } from '../../application/hooks/useDispatch';
+import MapComponent from '../components/MapComponent';
 
 export default function DispatchDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const [dispatch, setDispatch] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [assignedAmbulance, setAssignedAmbulance] = useState<any>(null);
+  const { selectedDispatch, loading, selectDispatch, updateStatus } = useDispatch();
 
   useEffect(() => {
-    // TODO: Implement actual GraphQL query to fetch dispatch details
-    const mockDispatch = {
-      id,
-      patientName: 'Juan Pérez',
-      patientAge: 45,
-      patientPhone: '+57 3001234567',
-      description: 'Dolor en el pecho',
-      severityLevel: 3,
-      status: 'active',
-      address: 'Calle 45 #12-34, Bogotá',
-      latitude: 4.7110,
-      longitude: -74.0721,
-      createdAt: new Date().toISOString(),
-      assignedAmbulance: {
-        id: 'AMB-001',
-        name: 'Ambulancia 1',
-        status: 'en ruta',
-      },
-    };
-    setDispatch(mockDispatch);
-    setAssignedAmbulance(mockDispatch.assignedAmbulance);
-    setLoading(false);
-  }, [id]);
+    if (id) {
+      selectDispatch(id).catch((error) => {
+        toast.error('Error al cargar despacho');
+        console.error(error);
+      });
+    }
+  }, [id, selectDispatch]);
 
   const handleUpdateStatus = async (newStatus: string) => {
+    if (!id) return;
+
     try {
-      // TODO: Implement actual GraphQL mutation
-      console.log('Update status:', newStatus);
-      setDispatch({ ...dispatch, status: newStatus });
-      toast.success('Estado actualizado');
+      await updateStatus(id, newStatus);
+      toast.success('Estado actualizado exitosamente');
     } catch (error) {
-      toast.error('Error al actualizar estado');
-      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar estado';
+      toast.error(errorMessage);
+      console.error('Error updating status:', error);
     }
   };
+
+  // Map backend status values to display values
+  const statusMap: Record<string, string> = {
+    pending: 'Pendiente',
+    in_transit: 'En Tránsito',
+    at_patient: 'En Paciente',
+    returning: 'Regresando',
+    completed: 'Completado',
+    cancelled: 'Cancelado',
+  };
+
+  const dispatch = selectedDispatch;
 
   if (loading) {
     return (
@@ -119,10 +116,16 @@ export default function DispatchDetailsPage() {
               <FiMapPin className="text-blue-600" />
               Ubicación
             </h2>
-            <p className="text-gray-700 mb-4">{dispatch.address}</p>
-            <div className="bg-gray-200 rounded h-64 flex items-center justify-center">
-              <p className="text-gray-600">Mapa: {dispatch.latitude}, {dispatch.longitude}</p>
-            </div>
+            <p className="text-gray-700 mb-4">{dispatch.direccion_origen || 'Ubicación no especificada'}</p>
+            <MapComponent
+              originLat={dispatch.ubicacion_origen_lat}
+              originLon={dispatch.ubicacion_origen_lng}
+              destinationLat={dispatch.ubicacion_destino_lat}
+              destinationLon={dispatch.ubicacion_destino_lng}
+              ambulanceLat={dispatch.ambulance?.currentLocation?.latitude}
+              ambulanceLon={dispatch.ambulance?.currentLocation?.longitude}
+              height="400px"
+            />
           </div>
         </div>
 
@@ -133,49 +136,54 @@ export default function DispatchDetailsPage() {
             <div className="mb-4">
               <span className={`badge badge-${
                 dispatch.status === 'pending' ? 'warning' :
-                dispatch.status === 'active' ? 'info' :
+                dispatch.status === 'in_transit' ? 'info' :
+                dispatch.status === 'at_patient' ? 'info' :
+                dispatch.status === 'returning' ? 'info' :
                 'success'
               }`}>
-                {dispatch.status}
+                {statusMap[dispatch.status] || dispatch.status}
               </span>
             </div>
             <div className="space-y-2">
-              {['pending', 'active', 'completed', 'cancelled'].map((status) => (
+              {['pending', 'in_transit', 'at_patient', 'returning', 'completed', 'cancelled'].map((status) => (
                 <button
                   key={status}
                   onClick={() => handleUpdateStatus(status)}
-                  disabled={dispatch.status === status}
+                  disabled={dispatch.status === status || loading}
                   className={`w-full py-2 rounded font-medium transition-colors ${
-                    dispatch.status === status
+                    dispatch.status === status || loading
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {status === 'pending' && 'Pendiente'}
-                  {status === 'active' && 'Activo'}
-                  {status === 'completed' && 'Completado'}
-                  {status === 'cancelled' && 'Cancelado'}
+                  {statusMap[status] || status}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Ambulancia Asignada */}
-          {assignedAmbulance && (
+          {dispatch.ambulance && (
             <div className="card">
               <h2 className="text-xl font-bold mb-4">Ambulancia Asignada</h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-gray-600 text-sm">ID</p>
-                  <p className="font-semibold">{assignedAmbulance.id}</p>
+                  <p className="font-semibold">{dispatch.ambulance.id}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600 text-sm">Nombre</p>
-                  <p className="font-semibold">{assignedAmbulance.name}</p>
+                  <p className="text-gray-600 text-sm">Código</p>
+                  <p className="font-semibold">{dispatch.ambulance.code || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Estado</p>
-                  <p className="font-semibold badge badge-info">{assignedAmbulance.status}</p>
+                  <p className="font-semibold badge badge-info">{dispatch.ambulance.status}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 text-sm">Ubicación Actual</p>
+                  <p className="font-semibold text-sm">
+                    {dispatch.ambulance.currentLocation?.latitude.toFixed(4)}, {dispatch.ambulance.currentLocation?.longitude.toFixed(4)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -194,6 +202,28 @@ export default function DispatchDetailsPage() {
                   {new Date(dispatch.createdAt).toLocaleString('es-CO')}
                 </p>
               </div>
+              {dispatch.fecha_asignacion && (
+                <div>
+                  <p className="text-gray-600 text-sm">Asignado</p>
+                  <p className="font-semibold text-sm">
+                    {new Date(dispatch.fecha_asignacion).toLocaleString('es-CO')}
+                  </p>
+                </div>
+              )}
+              {dispatch.fecha_llegada && (
+                <div>
+                  <p className="text-gray-600 text-sm">Llegada</p>
+                  <p className="font-semibold text-sm">
+                    {new Date(dispatch.fecha_llegada).toLocaleString('es-CO')}
+                  </p>
+                </div>
+              )}
+              {dispatch.tiempo_real_min && (
+                <div>
+                  <p className="text-gray-600 text-sm">Tiempo Real</p>
+                  <p className="font-semibold">{dispatch.tiempo_real_min} min</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { Dispatch } from '../../data/repositories/dispatch-repository';
 import { dispatchService } from '../services/dispatch-service';
 import { dispatchRepository } from '../../data/repositories/dispatch-repository';
+import { websocketService } from '../../data/repositories/websocket-service';
 
 interface DispatchState {
   // State
@@ -144,3 +145,52 @@ export const useDispatchStore = create<DispatchState>()(
     },
   }))
 );
+
+/**
+ * Initialize WebSocket listeners for real-time updates
+ */
+export const initializeWebSocketListeners = () => {
+  // Listen for dispatch status changes
+  websocketService.subscribe('dispatch_status_changed', (data: any) => {
+    const { dispatchId, status } = data;
+    useDispatchStore.setState((state) => ({
+      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status } : d)),
+      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status } : state.selectedDispatch,
+    }));
+  });
+
+  // Listen for dispatch completion
+  websocketService.subscribe('dispatch_completed', (data: any) => {
+    const { dispatchId } = data;
+    useDispatchStore.setState((state) => ({
+      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status: 'completed' } : d)),
+      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status: 'completed' } : state.selectedDispatch,
+    }));
+  });
+
+  // Listen for new dispatches
+  websocketService.subscribe('dispatch_created', (data: any) => {
+    const { dispatch } = data;
+    useDispatchStore.setState((state) => ({
+      dispatches: [dispatch, ...state.dispatches],
+    }));
+  });
+
+  // Listen for ambulance location updates
+  websocketService.subscribe('ambulance_location_updated', (data: any) => {
+    const { ambulanceId, location } = data;
+    useDispatchStore.setState((state) => ({
+      selectedDispatch: state.selectedDispatch?.ambulance?.id === ambulanceId
+        ? {
+            ...state.selectedDispatch,
+            ambulance: {
+              ...state.selectedDispatch.ambulance,
+              currentLocation: location,
+            },
+          }
+        : state.selectedDispatch,
+    }));
+  });
+
+  console.log('WebSocket listeners initialized');
+};

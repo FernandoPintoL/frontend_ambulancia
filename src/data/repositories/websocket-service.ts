@@ -29,7 +29,7 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
 
   constructor(url?: string) {
-    this.url = url || import.meta.env.REACT_APP_WS_URL || 'http://localhost:3001';
+    this.url = url || process.env.REACT_APP_WS_URL || 'http://localhost:3001';
     this.initializeListeners();
   }
 

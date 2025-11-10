@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { Personal, CreatePersonalInput, UpdatePersonalInput } from '../../data/repositories/personal-repository';
 import { personalRepository } from '../../data/repositories/personal-repository';
+import { websocketService } from '../../data/repositories/websocket-service';
 
 interface PersonalState {
   // State
@@ -137,3 +138,41 @@ export const usePersonalStore = create<PersonalState>()(
     },
   }))
 );
+
+/**
+ * Initialize WebSocket listeners for real-time personal updates
+ */
+export const initializeWebSocketListenersPersonal = () => {
+  // Listen for new personal created
+  websocketService.subscribe('personal_created', (data: any) => {
+    const { personal } = data;
+    usePersonalStore.setState((state) => ({
+      personales: [personal, ...state.personales],
+    }));
+  });
+
+  // Listen for personal updated
+  websocketService.subscribe('personal_updated', (data: any) => {
+    const { personal } = data;
+    usePersonalStore.setState((state) => ({
+      personales: state.personales.map((p) => (p.id === personal.id ? personal : p)),
+      selectedPersonal: state.selectedPersonal?.id === personal.id ? (personal as any) : state.selectedPersonal,
+    }));
+  });
+
+  // Listen for personal status changed
+  websocketService.subscribe('personal_status_changed', (data: any) => {
+    const { personalId, estado } = data;
+    usePersonalStore.setState((state) => ({
+      personales: state.personales.map((p) =>
+        p.id === personalId ? { ...p, estado } : p
+      ),
+      selectedPersonal:
+        state.selectedPersonal?.id === personalId
+          ? { ...state.selectedPersonal, estado }
+          : state.selectedPersonal,
+    }));
+  });
+
+  console.log('Personal WebSocket listeners initialized');
+};

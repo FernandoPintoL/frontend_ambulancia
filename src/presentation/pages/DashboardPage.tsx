@@ -5,14 +5,40 @@
 
 import { useEffect } from 'react';
 import { useDispatch } from '../../application/hooks/useDispatch';
+import { useWebSocket } from '../../application/hooks/useWebSocket';
 import { FiBarChart, FiTruck, FiAlertCircle, FiCheck } from 'react-icons/fi';
 
 const DashboardPage = () => {
   const { loadRecentDispatches, dispatches } = useDispatch();
+  const { subscribe } = useWebSocket();
 
   useEffect(() => {
     loadRecentDispatches(24);
   }, []);
+
+  // Setup WebSocket subscriptions for real-time dashboard updates
+  useEffect(() => {
+    const unsubCreated = subscribe('dispatch_created', () => {
+      console.log('Dispatch created, reloading stats');
+      loadRecentDispatches(24);
+    });
+
+    const unsubStatusChanged = subscribe('dispatch_status_changed', () => {
+      console.log('Dispatch status changed, reloading stats');
+      loadRecentDispatches(24);
+    });
+
+    const unsubCompleted = subscribe('dispatch_completed', () => {
+      console.log('Dispatch completed, reloading stats');
+      loadRecentDispatches(24);
+    });
+
+    return () => {
+      unsubCreated();
+      unsubStatusChanged();
+      unsubCompleted();
+    };
+  }, [subscribe]);
 
   const stats = {
     total: dispatches.length,

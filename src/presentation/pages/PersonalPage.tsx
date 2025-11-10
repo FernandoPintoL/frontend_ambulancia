@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { usePersonal } from '../../application/hooks/usePersonal';
+import { useWebSocket } from '../../application/hooks/useWebSocket';
 import PersonalTable from '../components/PersonalTable';
 import PersonalForm from '../components/PersonalForm';
 import PersonalStatusBadge from '../components/PersonalStatusBadge';
@@ -24,6 +25,7 @@ export default function PersonalPage() {
     updatePersonal,
     changePersonalStatus,
   } = usePersonal();
+  const { subscribe } = useWebSocket();
 
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [selectedPersonal, setSelectedPersonal] = useState<Personal | null>(null);
@@ -36,6 +38,34 @@ export default function PersonalPage() {
   useEffect(() => {
     loadPersonales(roleFilter || undefined, statusFilter || undefined, availableOnlyFilter);
   }, [roleFilter, statusFilter, availableOnlyFilter]);
+
+  // Setup WebSocket subscriptions for real-time personal updates
+  useEffect(() => {
+    // Subscribe to personal created events
+    const unsubCreated = subscribe('personal_created', () => {
+      console.log('Personal created, reloading list');
+      loadPersonales(roleFilter || undefined, statusFilter || undefined, availableOnlyFilter);
+    });
+
+    // Subscribe to personal updated events
+    const unsubUpdated = subscribe('personal_updated', () => {
+      console.log('Personal updated, reloading list');
+      loadPersonales(roleFilter || undefined, statusFilter || undefined, availableOnlyFilter);
+    });
+
+    // Subscribe to personal status changed events
+    const unsubStatusChanged = subscribe('personal_status_changed', () => {
+      console.log('Personal status changed, reloading list');
+      loadPersonales(roleFilter || undefined, statusFilter || undefined, availableOnlyFilter);
+    });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubCreated();
+      unsubUpdated();
+      unsubStatusChanged();
+    };
+  }, [subscribe, roleFilter, statusFilter, availableOnlyFilter]);
 
   // Filter personal based on search term
   const filteredPersonales = personales.filter((p) => {

@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiFilter, FiPlus, FiSearch } from 'react-icons/fi';
 import { useDispatch } from '../../application/hooks/useDispatch';
+import { useWebSocket } from '../../application/hooks/useWebSocket';
 
 export default function DispatchesPage() {
   const { dispatches, loading, loadDispatches } = useDispatch();
+  const { subscribe } = useWebSocket();
   const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'completed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -15,6 +17,30 @@ export default function DispatchesPage() {
       loadDispatches();
     }
   };
+
+  // Setup WebSocket subscriptions for real-time dispatch updates
+  useEffect(() => {
+    const unsubCreated = subscribe('dispatch_created', () => {
+      console.log('Dispatch created, reloading list');
+      loadDispatches(filter !== 'all' ? filter : undefined);
+    });
+
+    const unsubStatusChanged = subscribe('dispatch_status_changed', () => {
+      console.log('Dispatch status changed, reloading list');
+      loadDispatches(filter !== 'all' ? filter : undefined);
+    });
+
+    const unsubCompleted = subscribe('dispatch_completed', () => {
+      console.log('Dispatch completed, reloading list');
+      loadDispatches(filter !== 'all' ? filter : undefined);
+    });
+
+    return () => {
+      unsubCreated();
+      unsubStatusChanged();
+      unsubCompleted();
+    };
+  }, [subscribe, filter]);
 
   const filteredDispatches = dispatches.filter((dispatch) =>
     dispatch.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiMapPin, FiPhone, FiClock, FiMap } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useDispatch } from '../../application/hooks/useDispatch';
+import { useWebSocket } from '../../application/hooks/useWebSocket';
 import MapComponent from '../components/MapComponent';
 
 export default function DispatchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { selectedDispatch, loading, selectDispatch, updateStatus } = useDispatch();
+  const { subscribe } = useWebSocket();
 
   useEffect(() => {
     if (id) {
@@ -18,6 +20,28 @@ export default function DispatchDetailsPage() {
       });
     }
   }, [id, selectDispatch]);
+
+  // Setup WebSocket subscriptions for real-time dispatch updates
+  useEffect(() => {
+    if (!id) return;
+
+    const unsubStatusChanged = subscribe('dispatch_status_changed', (data: any) => {
+      if (data.dispatchId === parseInt(id) || data.dispatchId === id) {
+        console.log('Dispatch status changed, reloading');
+        selectDispatch(id);
+      }
+    });
+
+    const unsubLocationUpdated = subscribe('ambulance_location_updated', () => {
+      console.log('Ambulance location updated, reloading');
+      selectDispatch(id);
+    });
+
+    return () => {
+      unsubStatusChanged();
+      unsubLocationUpdated();
+    };
+  }, [id, subscribe, selectDispatch]);
 
   const handleUpdateStatus = async (newStatus: string) => {
     if (!id) return;

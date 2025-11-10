@@ -317,9 +317,19 @@ export default function TrackingHistoryPage() {
             <MapComponent
               originLat={originLat}
               originLon={originLon}
+              destinationLat={selectedDispatch.ubicacion_destino_lat}
+              destinationLon={selectedDispatch.ubicacion_destino_lng}
               ambulanceLat={lastPoint?.latitud}
               ambulanceLon={lastPoint?.longitud}
+              trackingPoints={filteredPoints.map((p) => ({
+                latitude: p.latitud,
+                longitude: p.longitud,
+                velocidad: p.velocidad,
+                timestamp: p.timestamp_gps,
+              }))}
               height="500px"
+              showRoute={true}
+              showTrackingPoints={true}
             />
             {stats && (
               <div className="mt-4 pt-4 border-t space-y-2">

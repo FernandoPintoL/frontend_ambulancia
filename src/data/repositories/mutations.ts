@@ -198,3 +198,144 @@ export const RECORD_GPS_LOCATION = gql`
     }
   }
 `;
+
+/**
+ * Create new personal
+ */
+export const CREATE_PERSONAL = gql`
+  mutation CrearPersonal(
+    $nombre: String!
+    $apellido: String!
+    $ci: String!
+    $rol: String!
+    $especialidad: String
+    $experiencia: Int
+    $telefono: String
+    $email: String
+  ) {
+    crearPersonal(
+      nombre: $nombre
+      apellido: $apellido
+      ci: $ci
+      rol: $rol
+      especialidad: $especialidad
+      experiencia: $experiencia
+      telefono: $telefono
+      email: $email
+    ) {
+      id
+      nombre
+      apellido
+      nombre_completo
+      ci
+      rol
+      especialidad
+      experiencia
+      estado
+      telefono
+      email
+      created_at
+    }
+  }
+`;
+
+/**
+ * Update personal
+ */
+export const UPDATE_PERSONAL = gql`
+  mutation ActualizarPersonal(
+    $id: Int!
+    $nombre: String
+    $apellido: String
+    $especialidad: String
+    $experiencia: Int
+    $telefono: String
+    $email: String
+  ) {
+    actualizarPersonal(
+      id: $id
+      nombre: $nombre
+      apellido: $apellido
+      especialidad: $especialidad
+      experiencia: $experiencia
+      telefono: $telefono
+      email: $email
+    ) {
+      id
+      nombre
+      apellido
+      nombre_completo
+      ci
+      rol
+      especialidad
+      experiencia
+      estado
+      telefono
+      email
+      updated_at
+    }
+  }
+`;
+
+/**
+ * Change personal status
+ */
+export const CHANGE_PERSONAL_STATUS = gql`
+  mutation CambiarEstadoPersonal($id: Int!, $estado: String!) {
+    cambiarEstadoPersonal(id: $id, estado: $estado) {
+      id
+      nombre
+      apellido
+      nombre_completo
+      estado
+      updated_at
+    }
+  }
+`;
+
+/**
+ * Assign personal to dispatch
+ */
+export const ASSIGN_PERSONAL = gql`
+  mutation AsignarPersonal(
+    $despacho_id: Int!
+    $personal_id: Int!
+    $rol_asignado: String!
+    $es_responsable: Boolean
+  ) {
+    asignarPersonal(
+      despacho_id: $despacho_id
+      personal_id: $personal_id
+      rol_asignado: $rol_asignado
+      es_responsable: $es_responsable
+    ) {
+      id
+      personalAsignado {
+        id
+        nombre
+        apellido
+        nombre_completo
+        rol
+        estado
+      }
+    }
+  }
+`;
+
+/**
+ * Remove personal from dispatch
+ */
+export const UNASSIGN_PERSONAL = gql`
+  mutation DesasignarPersonal($despacho_id: Int!, $personal_id: Int!) {
+    desasignarPersonal(despacho_id: $despacho_id, personal_id: $personal_id) {
+      id
+      personalAsignado {
+        id
+        nombre
+        apellido
+        nombre_completo
+        rol
+      }
+    }
+  }
+`;

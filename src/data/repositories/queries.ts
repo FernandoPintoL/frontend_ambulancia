@@ -356,3 +356,60 @@ export const GET_DIAGNOSTIC_REPORT = gql`
     }
   }
 `;
+
+/**
+ * Get personal by ID
+ */
+export const GET_PERSONAL = gql`
+  query Personal($id: Int!) {
+    personal(id: $id) {
+      id
+      nombre
+      apellido
+      nombre_completo
+      ci
+      rol
+      especialidad
+      experiencia
+      estado
+      telefono
+      email
+      created_at
+      updated_at
+    }
+  }
+`;
+
+/**
+ * List all personal with optional filters
+ */
+export const LIST_PERSONALES = gql`
+  query Personales(
+    $rol: String
+    $estado: String
+    $disponibles: Boolean
+    $limit: Int
+    $offset: Int
+  ) {
+    personales(
+      rol: $rol
+      estado: $estado
+      disponibles: $disponibles
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      nombre
+      apellido
+      nombre_completo
+      ci
+      rol
+      especialidad
+      experiencia
+      estado
+      telefono
+      email
+      created_at
+    }
+  }
+`;

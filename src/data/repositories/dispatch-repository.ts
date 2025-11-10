@@ -16,6 +16,7 @@ import {
   ASSIGN_AMBULANCE,
   ADD_DISPATCH_FEEDBACK,
   OPTIMIZE_DISPATCH,
+  RECORD_GPS_LOCATION,
 } from './mutations';
 
 export interface Dispatch {
@@ -158,6 +159,31 @@ class DispatchRepository {
       { dispatchId }
     );
     return optimizeDispatch;
+  }
+
+  /**
+   * Record GPS location for dispatch
+   */
+  async recordGpsLocation(
+    dispatchId: string,
+    latitude: number,
+    longitude: number,
+    velocidad?: number,
+    altitud?: number,
+    precision?: number
+  ): Promise<any> {
+    const { recordGpsLocation } = await graphqlClient.request<{ recordGpsLocation: any }>(
+      RECORD_GPS_LOCATION,
+      {
+        dispatchId,
+        latitude,
+        longitude,
+        velocidad,
+        altitud,
+        precision,
+      }
+    );
+    return recordGpsLocation;
   }
 }
 

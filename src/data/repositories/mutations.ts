@@ -166,3 +166,35 @@ export const ACTIVATE_MODEL_VERSION = gql`
     }
   }
 `;
+
+/**
+ * Record GPS location for dispatch
+ */
+export const RECORD_GPS_LOCATION = gql`
+  mutation RecordGpsLocation(
+    $dispatchId: ID!
+    $latitude: Float!
+    $longitude: Float!
+    $velocidad: Float
+    $altitud: Float
+    $precision: Float
+  ) {
+    recordGpsLocation(
+      dispatchId: $dispatchId
+      latitude: $latitude
+      longitude: $longitude
+      velocidad: $velocidad
+      altitud: $altitud
+      precision: $precision
+    ) {
+      id
+      dispatchId
+      latitud
+      longitud
+      velocidad
+      altitud
+      precision
+      timestamp_gps
+    }
+  }
+`;

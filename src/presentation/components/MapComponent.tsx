@@ -125,7 +125,7 @@ export default function MapComponent({
     }
 
     // Clear existing markers
-    mapRef.current.eachLayer((layer) => {
+    ( mapRef.current as any).eachLayer((layer) => {
       if (layer instanceof L.Marker) {
         mapRef.current?.removeLayer(layer);
       }

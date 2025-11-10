@@ -57,7 +57,7 @@ class PersonalRepository {
   private client: GraphQLClient;
 
   constructor() {
-    const apiUrl = import.meta.env.REACT_APP_GRAPHQL_URL || 'http://localhost:3000/graphql';
+    const apiUrl = (import.meta.env as any).REACT_APP_GRAPHQL_URL || 'http://localhost:8001/graphql';
     this.client = new GraphQLClient(apiUrl);
   }
 
@@ -65,7 +65,7 @@ class PersonalRepository {
    * Get personal by ID
    */
   async getPersonal(id: string): Promise<Personal> {
-    const response = await this.client.request(GET_PERSONAL, { id: parseInt(id) });
+    const response: any = await this.client.request(GET_PERSONAL, { id: parseInt(id) });
     return response.personal;
   }
 
@@ -75,16 +75,16 @@ class PersonalRepository {
   async listPersonales(
     rol?: string,
     estado?: string,
-    disponibles?: boolean,
-    limit: number = 50,
-    offset: number = 0
+    disponiblesOnly?: boolean,
+    limit?: number,
+    offset?: number
   ): Promise<Personal[]> {
-    const response = await this.client.request(LIST_PERSONALES, {
-      rol,
-      estado,
-      disponibles,
-      limit,
-      offset,
+    const response: any = await this.client.request(LIST_PERSONALES, {
+      rol: rol || null,
+      estado: estado || null,
+      disponiblesOnly: disponiblesOnly || false,
+      limit: limit || 100,
+      offset: offset || 0,
     });
     return response.personales;
   }
@@ -92,22 +92,22 @@ class PersonalRepository {
   /**
    * Get personal by role
    */
-  async getPersonalesByRol(rol: string, limit: number = 50): Promise<Personal[]> {
-    return this.listPersonales(rol, undefined, undefined, limit, 0);
+  async getPersonalesByRol(rol: string): Promise<Personal[]> {
+    return this.listPersonales(rol);
   }
 
   /**
    * Get available personal
    */
-  async getAvailablePersonal(limit: number = 50): Promise<Personal[]> {
-    return this.listPersonales(undefined, 'disponible', true, limit, 0);
+  async getAvailablePersonal(): Promise<Personal[]> {
+    return this.listPersonales(undefined, 'disponible', true);
   }
 
   /**
    * Create new personal
    */
   async createPersonal(data: CreatePersonalInput): Promise<Personal> {
-    const response = await this.client.request(CREATE_PERSONAL, {
+    const response: any = await this.client.request(CREATE_PERSONAL, {
       nombre: data.nombre,
       apellido: data.apellido,
       ci: data.ci,
@@ -124,7 +124,7 @@ class PersonalRepository {
    * Update personal
    */
   async updatePersonal(data: UpdatePersonalInput): Promise<Personal> {
-    const response = await this.client.request(UPDATE_PERSONAL, {
+    const response: any = await this.client.request(UPDATE_PERSONAL, {
       id: parseInt(data.id),
       nombre: data.nombre,
       apellido: data.apellido,
@@ -140,11 +140,11 @@ class PersonalRepository {
    * Change personal status
    */
   async changePersonalStatus(
-    id: string,
+    personalId: string,
     estado: 'disponible' | 'en_servicio' | 'descanso' | 'vacaciones'
   ): Promise<Personal> {
-    const response = await this.client.request(CHANGE_PERSONAL_STATUS, {
-      id: parseInt(id),
+    const response: any = await this.client.request(CHANGE_PERSONAL_STATUS, {
+      id: parseInt(personalId),
       estado,
     });
     return response.cambiarEstadoPersonal;
@@ -154,13 +154,13 @@ class PersonalRepository {
    * Assign personal to dispatch
    */
   async assignPersonal(
-    dispatchId: string,
+    despachoId: string,
     personalId: string,
     rolAsignado: string,
     esResponsable?: boolean
   ): Promise<any> {
-    const response = await this.client.request(ASSIGN_PERSONAL, {
-      despacho_id: parseInt(dispatchId),
+    const response: any = await this.client.request(ASSIGN_PERSONAL, {
+      despacho_id: parseInt(despachoId),
       personal_id: parseInt(personalId),
       rol_asignado: rolAsignado,
       es_responsable: esResponsable ?? false,
@@ -169,15 +169,16 @@ class PersonalRepository {
   }
 
   /**
-   * Remove personal from dispatch
+   * Unassign personal from dispatch
    */
-  async unassignPersonal(dispatchId: string, personalId: string): Promise<any> {
-    const response = await this.client.request(UNASSIGN_PERSONAL, {
-      despacho_id: parseInt(dispatchId),
+  async unassignPersonal(despachoId: string, personalId: string): Promise<any> {
+    const response: any = await this.client.request(UNASSIGN_PERSONAL, {
+      despacho_id: parseInt(despachoId),
       personal_id: parseInt(personalId),
     });
     return response.desasignarPersonal;
   }
 }
 
+// Singleton instance
 export const personalRepository = new PersonalRepository();

@@ -280,8 +280,8 @@ export default function TrackingHistoryPage() {
     );
   }
 
-  const originLat = selectedDispatch.ubicacion_origen_lat;
-  const originLon = selectedDispatch.ubicacion_origen_lng;
+  const originLat = (selectedDispatch as any).ubicacion_origen_lat;
+  const originLon = (selectedDispatch as any).ubicacion_origen_lng;
   const firstPoint = filteredPoints[0];
   const lastPoint = filteredPoints[filteredPoints.length - 1];
 
@@ -390,8 +390,8 @@ export default function TrackingHistoryPage() {
             <MapComponent
               originLat={originLat}
               originLon={originLon}
-              destinationLat={selectedDispatch.ubicacion_destino_lat}
-              destinationLon={selectedDispatch.ubicacion_destino_lng}
+              destinationLat={(selectedDispatch as any).ubicacion_destino_lat}
+              destinationLon={(selectedDispatch as any).ubicacion_destino_lng}
               ambulanceLat={lastPoint?.latitud}
               ambulanceLon={lastPoint?.longitud}
               trackingPoints={filteredPoints.map((p) => ({

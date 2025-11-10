@@ -124,7 +124,7 @@ export default function DispatchDetailsPage() {
                 <p className="text-gray-600 text-sm">Teléfono</p>
                 <p className="font-semibold flex items-center gap-2">
                   <FiPhone className="text-blue-600" />
-                  {dispatch.patientPhone}
+                  {(dispatch as any).patientPhone}
                 </p>
               </div>
               <div>
@@ -152,14 +152,14 @@ export default function DispatchDetailsPage() {
               <FiMapPin className="text-blue-600" />
               Ubicación
             </h2>
-            <p className="text-gray-700 mb-4">{dispatch.direccion_origen || 'Ubicación no especificada'}</p>
+            <p className="text-gray-700 mb-4">{(dispatch as any).direccion_origen || 'Ubicación no especificada'}</p>
             <MapComponent
-              originLat={dispatch.ubicacion_origen_lat}
-              originLon={dispatch.ubicacion_origen_lng}
-              destinationLat={dispatch.ubicacion_destino_lat}
-              destinationLon={dispatch.ubicacion_destino_lng}
-              ambulanceLat={dispatch.ambulance?.currentLocation?.latitude}
-              ambulanceLon={dispatch.ambulance?.currentLocation?.longitude}
+              originLat={(dispatch as any).ubicacion_origen_lat}
+              originLon={(dispatch as any).ubicacion_origen_lng}
+              destinationLat={(dispatch as any).ubicacion_destino_lat}
+              destinationLon={(dispatch as any).ubicacion_destino_lng}
+              ambulanceLat={( dispatch as any).ambulance?.currentLocation?.latitude}
+              ambulanceLon={( dispatch as any).ambulance?.currentLocation?.longitude}
               height="400px"
             />
           </div>
@@ -199,26 +199,26 @@ export default function DispatchDetailsPage() {
           </div>
 
           {/* Ambulancia Asignada */}
-          {dispatch.ambulance && (
+          {( dispatch as any).ambulance && (
             <div className="card">
               <h2 className="text-xl font-bold mb-4">Ambulancia Asignada</h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-gray-600 text-sm">ID</p>
-                  <p className="font-semibold">{dispatch.ambulance.id}</p>
+                  <p className="font-semibold">{( dispatch as any).ambulance.id}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Código</p>
-                  <p className="font-semibold">{dispatch.ambulance.code || 'N/A'}</p>
+                  <p className="font-semibold">{( dispatch as any).ambulance.code || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Estado</p>
-                  <p className="font-semibold badge badge-info">{dispatch.ambulance.status}</p>
+                  <p className="font-semibold badge badge-info">{( dispatch as any).ambulance.status}</p>
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm">Ubicación Actual</p>
                   <p className="font-semibold text-sm">
-                    {dispatch.ambulance.currentLocation?.latitude.toFixed(4)}, {dispatch.ambulance.currentLocation?.longitude.toFixed(4)}
+                    {( dispatch as any).ambulance.currentLocation?.latitude.toFixed(4)}, {( dispatch as any).ambulance.currentLocation?.longitude.toFixed(4)}
                   </p>
                 </div>
               </div>
@@ -238,26 +238,26 @@ export default function DispatchDetailsPage() {
                   {new Date(dispatch.createdAt).toLocaleString('es-CO')}
                 </p>
               </div>
-              {dispatch.fecha_asignacion && (
+              {(dispatch as any).fecha_asignacion && (
                 <div>
                   <p className="text-gray-600 text-sm">Asignado</p>
                   <p className="font-semibold text-sm">
-                    {new Date(dispatch.fecha_asignacion).toLocaleString('es-CO')}
+                    {new Date((dispatch as any).fecha_asignacion).toLocaleString('es-CO')}
                   </p>
                 </div>
               )}
-              {dispatch.fecha_llegada && (
+              {(dispatch as any).fecha_llegada && (
                 <div>
                   <p className="text-gray-600 text-sm">Llegada</p>
                   <p className="font-semibold text-sm">
-                    {new Date(dispatch.fecha_llegada).toLocaleString('es-CO')}
+                    {new Date((dispatch as any).fecha_llegada).toLocaleString('es-CO')}
                   </p>
                 </div>
               )}
-              {dispatch.tiempo_real_min && (
+              {(dispatch as any).tiempo_real_min && (
                 <div>
                   <p className="text-gray-600 text-sm">Tiempo Real</p>
-                  <p className="font-semibold">{dispatch.tiempo_real_min} min</p>
+                  <p className="font-semibold">{(dispatch as any).tiempo_real_min} min</p>
                 </div>
               )}
             </div>

@@ -165,11 +165,11 @@ export const initializeWebSocketListenersPersonal = () => {
     const { personalId, estado } = data;
     usePersonalStore.setState((state) => ({
       personales: state.personales.map((p) =>
-        p.id === personalId ? { ...p, estado } : p
+        p.id === personalId ? { ...p, estado } as any : p
       ),
       selectedPersonal:
         state.selectedPersonal?.id === personalId
-          ? { ...state.selectedPersonal, estado }
+          ? { ...state.selectedPersonal, estado } as any
           : state.selectedPersonal,
     }));
   });

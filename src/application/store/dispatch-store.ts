@@ -118,7 +118,7 @@ export const useDispatchStore = create<DispatchState>()(
         await dispatchService.completeDispatch(dispatchId, feedback);
         set((state) => ({
           dispatches: state.dispatches.map((d) =>
-            d.id === dispatchId ? { ...d, status: 'completed' } : d
+            d.id === dispatchId ? { ...d, status: 'completed' } as any : d
           ),
         }));
       } catch (error) {
@@ -154,8 +154,8 @@ export const initializeWebSocketListeners = () => {
   websocketService.subscribe('dispatch_status_changed', (data: any) => {
     const { dispatchId, status } = data;
     useDispatchStore.setState((state) => ({
-      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status } : d)),
-      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status } : state.selectedDispatch,
+      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status } as any : d)),
+      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status } as any : state.selectedDispatch,
     }));
   });
 
@@ -163,8 +163,8 @@ export const initializeWebSocketListeners = () => {
   websocketService.subscribe('dispatch_completed', (data: any) => {
     const { dispatchId } = data;
     useDispatchStore.setState((state) => ({
-      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status: 'completed' } : d)),
-      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status: 'completed' } : state.selectedDispatch,
+      dispatches: state.dispatches.map((d) => (d.id === dispatchId ? { ...d, status: 'completed' } as any : d)),
+      selectedDispatch: state.selectedDispatch?.id === dispatchId ? { ...state.selectedDispatch, status: 'completed' } as any : state.selectedDispatch,
     }));
   });
 

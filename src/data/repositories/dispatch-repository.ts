@@ -19,10 +19,21 @@ import {
   RECORD_GPS_LOCATION,
 } from './mutations';
 
+export interface Ambulance {
+  id: string;
+  code?: string;
+  status: string;
+  currentLocation?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
 export interface Dispatch {
   id: string;
   patientName: string;
   patientAge: number;
+  patientPhone?: string;
   patientLocation: {
     latitude: number;
     longitude: number;
@@ -33,6 +44,16 @@ export interface Dispatch {
   assignedAmbulanceId?: string;
   createdAt: string;
   updatedAt: string;
+  // Additional fields from backend
+  direccion_origen?: string;
+  ubicacion_origen_lat?: number;
+  ubicacion_origen_lng?: number;
+  ubicacion_destino_lat?: number;
+  ubicacion_destino_lng?: number;
+  ambulance?: Ambulance;
+  fecha_asignacion?: string;
+  fecha_llegada?: string;
+  tiempo_real_min?: number;
 }
 
 export interface DispatchStatistics {
@@ -86,27 +107,20 @@ class DispatchRepository {
   /**
    * Get dispatch statistics
    */
-  async getDispatchStatistics(hours: number = 24): Promise<DispatchStatistics> {
-    const { dispatchStatistics } = await graphqlClient.request<{
-      dispatchStatistics: DispatchStatistics;
-    }>(GET_DISPATCH_STATISTICS, { hours });
-    return dispatchStatistics;
+  async getDispatchStatistics(): Promise<DispatchStatistics> {
+    const { getDispatchStatistics } = await graphqlClient.request<{
+      getDispatchStatistics: DispatchStatistics;
+    }>(GET_DISPATCH_STATISTICS);
+    return getDispatchStatistics;
   }
 
   /**
-   * Create dispatch
+   * Create new dispatch
    */
-  async createDispatch(data: {
-    patientName: string;
-    patientAge: number;
-    patientLat: number;
-    patientLon: number;
-    description: string;
-    severityLevel: number;
-  }): Promise<Dispatch> {
+  async createDispatch(data: any): Promise<Dispatch> {
     const { createDispatch } = await graphqlClient.request<{ createDispatch: Dispatch }>(
       CREATE_DISPATCH,
-      data
+      { input: data }
     );
     return createDispatch;
   }
@@ -133,25 +147,17 @@ class DispatchRepository {
   }
 
   /**
-   * Add dispatch feedback
+   * Add feedback to dispatch
    */
-  async addDispatchFeedback(
-    dispatchId: string,
-    feedback: {
-      rating: number;
-      comment?: string;
-      responseTimeMinutes?: number;
-      patientOutcome?: string;
-    }
-  ): Promise<{ dispatchId: string; rating: number; comment: string }> {
+  async addDispatchFeedback(dispatchId: string, feedback: any): Promise<Dispatch> {
     const { addDispatchFeedback } = await graphqlClient.request<{
-      addDispatchFeedback: { dispatchId: string; rating: number; comment: string };
-    }>(ADD_DISPATCH_FEEDBACK, { dispatchId, ...feedback });
+      addDispatchFeedback: Dispatch;
+    }>(ADD_DISPATCH_FEEDBACK, { dispatchId, feedback });
     return addDispatchFeedback;
   }
 
   /**
-   * Optimize dispatch
+   * Optimize dispatch route
    */
   async optimizeDispatch(dispatchId: string): Promise<any> {
     const { optimizeDispatch } = await graphqlClient.request<{ optimizeDispatch: any }>(
@@ -164,24 +170,10 @@ class DispatchRepository {
   /**
    * Record GPS location for dispatch
    */
-  async recordGpsLocation(
-    dispatchId: string,
-    latitude: number,
-    longitude: number,
-    velocidad?: number,
-    altitud?: number,
-    precision?: number
-  ): Promise<any> {
+  async recordGpsLocation(dispatchId: string, latitude: number, longitude: number, speed?: number): Promise<any> {
     const { recordGpsLocation } = await graphqlClient.request<{ recordGpsLocation: any }>(
       RECORD_GPS_LOCATION,
-      {
-        dispatchId,
-        latitude,
-        longitude,
-        velocidad,
-        altitud,
-        precision,
-      }
+      { dispatchId, latitude, longitude, speed }
     );
     return recordGpsLocation;
   }

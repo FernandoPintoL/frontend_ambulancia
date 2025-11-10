@@ -57,7 +57,7 @@ class PersonalRepository {
   private client: GraphQLClient;
 
   constructor() {
-    const apiUrl = (import.meta.env as any).REACT_APP_GRAPHQL_URL || 'http://localhost:8001/graphql';
+    const apiUrl = (process.env as any).REACT_APP_GRAPHQL_URL || 'http://localhost:8001/graphql';
     this.client = new GraphQLClient(apiUrl);
   }
 

@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { FiArrowLeft, FiMapPin, FiPhone, FiClock } from 'react-icons/fi';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FiArrowLeft, FiMapPin, FiPhone, FiClock, FiMap } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useDispatch } from '../../application/hooks/useDispatch';
 import MapComponent from '../components/MapComponent';
 
 export default function DispatchDetailsPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { selectedDispatch, loading, selectDispatch, updateStatus } = useDispatch();
 
   useEffect(() => {
@@ -63,11 +64,22 @@ export default function DispatchDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <a href="/dispatches" className="btn-secondary flex items-center gap-2 w-fit">
-          <FiArrowLeft />
-          Volver
-        </a>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <a href="/dispatches" className="btn-secondary flex items-center gap-2 w-fit">
+            <FiArrowLeft />
+            Volver
+          </a>
+        </div>
+        {dispatch && (
+          <button
+            onClick={() => navigate(`/dispatches/${id}/tracking`)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <FiMap />
+            Ver Rastreo
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

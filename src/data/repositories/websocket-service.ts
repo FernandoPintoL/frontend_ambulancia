@@ -1,26 +1,35 @@
 /**
  * WebSocket Service
- * Real-time updates for dispatch status changes and ambulance location tracking
+ * Real-time updates using Socket.IO for dispatch status, ambulance location, and personal updates
  */
 
+import { io, Socket } from 'socket.io-client';
+
 type WebSocketEventHandler = (data: any) => void;
-type WebSocketEventType = 'dispatch_created' | 'dispatch_status_changed' | 'ambulance_location_updated' | 'dispatch_completed' | 'error' | 'connected' | 'disconnected';
+type WebSocketEventType =
+  | 'dispatch_created'
+  | 'dispatch_status_changed'
+  | 'ambulance_location_updated'
+  | 'dispatch_completed'
+  | 'personal_created'
+  | 'personal_updated'
+  | 'personal_status_changed'
+  | 'error'
+  | 'connected'
+  | 'disconnected';
 
 interface WebSocketListeners {
   [key: string]: Set<WebSocketEventHandler>;
 }
 
 class WebSocketService {
-  private ws: WebSocket | null = null;
+  private socket: Socket | null = null;
   private url: string;
   private listeners: WebSocketListeners = {};
-  private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private reconnectDelay = 3000;
-  private isIntentionallyClosed = false;
 
   constructor(url?: string) {
-    this.url = url || import.meta.env.REACT_APP_WS_URL || 'ws://localhost:4000';
+    this.url = url || import.meta.env.REACT_APP_WS_URL || 'http://localhost:3001';
     this.initializeListeners();
   }
 
@@ -30,6 +39,9 @@ class WebSocketService {
       'dispatch_status_changed',
       'ambulance_location_updated',
       'dispatch_completed',
+      'personal_created',
+      'personal_updated',
+      'personal_status_changed',
       'error',
       'connected',
       'disconnected',
@@ -41,68 +53,84 @@ class WebSocketService {
   }
 
   /**
-   * Connect to WebSocket server
+   * Connect to WebSocket server using Socket.IO
    */
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(this.url);
+        const token = localStorage.getItem('token');
 
-        this.ws.onopen = () => {
-          console.log('WebSocket connected');
-          this.reconnectAttempts = 0;
+        this.socket = io(this.url, {
+          auth: {
+            token: token || '',
+          },
+          reconnection: true,
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
+          reconnectionAttempts: this.maxReconnectAttempts,
+          transports: ['websocket', 'polling'],
+        });
+
+        // Connection successful
+        this.socket.on('connect', () => {
+          console.log('Socket.IO connected:', this.socket?.id);
           this.emit('connected');
           resolve();
-        };
+        });
 
-        this.ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            this.handleMessage(data);
-          } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
-          }
-        };
+        // Dispatch events
+        this.socket.on('dispatch_created', (data) => {
+          console.log('Dispatch created event:', data);
+          this.emit('dispatch_created', data);
+        });
 
-        this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          this.emit('error', { message: 'WebSocket connection error' });
-          reject(error);
-        };
+        this.socket.on('dispatch_status_changed', (data) => {
+          console.log('Dispatch status changed event:', data);
+          this.emit('dispatch_status_changed', data);
+        });
 
-        this.ws.onclose = () => {
-          console.log('WebSocket disconnected');
+        this.socket.on('dispatch_completed', (data) => {
+          console.log('Dispatch completed event:', data);
+          this.emit('dispatch_completed', data);
+        });
+
+        // Ambulance events
+        this.socket.on('ambulance_location_updated', (data) => {
+          console.log('Ambulance location updated event:', data);
+          this.emit('ambulance_location_updated', data);
+        });
+
+        // Personal events
+        this.socket.on('personal_created', (data) => {
+          console.log('Personal created event:', data);
+          this.emit('personal_created', data);
+        });
+
+        this.socket.on('personal_updated', (data) => {
+          console.log('Personal updated event:', data);
+          this.emit('personal_updated', data);
+        });
+
+        this.socket.on('personal_status_changed', (data) => {
+          console.log('Personal status changed event:', data);
+          this.emit('personal_status_changed', data);
+        });
+
+        // Error handler
+        this.socket.on('connect_error', (error) => {
+          console.error('Socket.IO connection error:', error);
+          this.emit('error', { message: `Connection error: ${error.message}` });
+        });
+
+        // Disconnect handler
+        this.socket.on('disconnect', (reason) => {
+          console.log('Socket.IO disconnected:', reason);
           this.emit('disconnected');
-          this.attemptReconnect();
-        };
+        });
       } catch (error) {
         reject(error);
       }
     });
-  }
-
-  /**
-   * Handle incoming WebSocket messages
-   */
-  private handleMessage(data: { type: string; payload: any }) {
-    const { type, payload } = data;
-
-    switch (type) {
-      case 'dispatch_created':
-        this.emit('dispatch_created', payload);
-        break;
-      case 'dispatch_status_changed':
-        this.emit('dispatch_status_changed', payload);
-        break;
-      case 'ambulance_location_updated':
-        this.emit('ambulance_location_updated', payload);
-        break;
-      case 'dispatch_completed':
-        this.emit('dispatch_completed', payload);
-        break;
-      default:
-        console.warn('Unknown WebSocket message type:', type);
-    }
   }
 
   /**
@@ -130,49 +158,20 @@ class WebSocketService {
         try {
           handler(data);
         } catch (error) {
-          console.error(`Error in WebSocket listener for ${event}:`, error);
+          console.error(`Error in Socket.IO listener for ${event}:`, error);
         }
       });
     }
   }
 
   /**
-   * Send message to WebSocket server
+   * Emit event to Socket.IO server
    */
-  public send(type: string, payload: any): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(
-        JSON.stringify({
-          type,
-          payload,
-        })
-      );
+  public send(event: string, data: any): void {
+    if (this.socket?.connected) {
+      this.socket.emit(event, data);
     } else {
-      console.warn('WebSocket is not connected');
-    }
-  }
-
-  /**
-   * Attempt to reconnect
-   */
-  private attemptReconnect(): void {
-    if (this.isIntentionallyClosed) {
-      return;
-    }
-
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      const delay = this.reconnectDelay * this.reconnectAttempts;
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`);
-
-      setTimeout(() => {
-        this.connect().catch((error) => {
-          console.error('Reconnection failed:', error);
-        });
-      }, delay);
-    } else {
-      console.error('Max reconnection attempts reached');
-      this.emit('error', { message: 'Failed to reconnect to WebSocket after multiple attempts' });
+      console.warn('Socket.IO is not connected');
     }
   }
 
@@ -180,10 +179,9 @@ class WebSocketService {
    * Disconnect from WebSocket
    */
   public disconnect(): void {
-    this.isIntentionallyClosed = true;
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
   }
 
@@ -191,7 +189,7 @@ class WebSocketService {
    * Check if connected
    */
   public isConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
+    return this.socket?.connected || false;
   }
 }
 

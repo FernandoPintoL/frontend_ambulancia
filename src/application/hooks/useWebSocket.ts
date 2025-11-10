@@ -6,7 +6,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { websocketService } from '../../data/repositories/websocket-service';
 
-type WebSocketEventType = 'dispatch_created' | 'dispatch_status_changed' | 'ambulance_location_updated' | 'dispatch_completed' | 'error' | 'connected' | 'disconnected';
+type WebSocketEventType =
+  | 'dispatch_created'
+  | 'dispatch_status_changed'
+  | 'ambulance_location_updated'
+  | 'dispatch_completed'
+  | 'personal_created'
+  | 'personal_updated'
+  | 'personal_status_changed'
+  | 'error'
+  | 'connected'
+  | 'disconnected';
 
 /**
  * Hook to manage WebSocket connections and events
@@ -23,8 +33,8 @@ export const useWebSocket = () => {
         setIsConnected(true);
         setConnectionError(null);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to connect to WebSocket';
-        console.error('WebSocket connection error:', errorMessage);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to connect to Socket.IO';
+        console.error('Socket.IO connection error:', errorMessage);
         setConnectionError(errorMessage);
         setIsConnected(false);
       }
@@ -32,8 +42,25 @@ export const useWebSocket = () => {
 
     connectWebSocket();
 
+    // Setup listener for disconnections
+    const unsubDisconnect = websocketService.subscribe('disconnected', () => {
+      setIsConnected(false);
+    });
+
+    const unsubConnect = websocketService.subscribe('connected', () => {
+      setIsConnected(true);
+      setConnectionError(null);
+    });
+
+    const unsubError = websocketService.subscribe('error', (error) => {
+      setConnectionError(error?.message || 'WebSocket error occurred');
+    });
+
     // Cleanup on unmount
     return () => {
+      unsubDisconnect();
+      unsubConnect();
+      unsubError();
       websocketService.disconnect();
       setIsConnected(false);
     };

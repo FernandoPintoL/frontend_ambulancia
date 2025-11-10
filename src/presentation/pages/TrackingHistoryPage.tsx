@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiDownload, FiMapPin, FiTrendingUp, FiNavigation } from 'react-icons/fi';
+import { FiArrowLeft, FiDownload, FiMapPin, FiTrendingUp, FiNavigation, FiWifiOff, FiWifi } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useDispatch } from '../../application/hooks/useDispatch';
+import { useWebSocket } from '../../application/hooks/useWebSocket';
 import { dispatchRepository } from '../../data/repositories/dispatch-repository';
 import MapComponent from '../components/MapComponent';
 
@@ -31,6 +32,7 @@ export default function TrackingHistoryPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { selectedDispatch, loading: dispatchLoading, selectDispatch } = useDispatch();
+  const { isConnected, subscribe } = useWebSocket();
 
   const [trackingPoints, setTrackingPoints] = useState<TrackingPoint[]>([]);
   const [stats, setStats] = useState<TrackingStats | null>(null);
@@ -39,6 +41,29 @@ export default function TrackingHistoryPage() {
   const [filteredPoints, setFilteredPoints] = useState<TrackingPoint[]>([]);
   const [dateFilter, setDateFilter] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [lastUpdateTime, setLastUpdateTime] = useState<string | null>(null);
+
+  /**
+   * Reload tracking data from server
+   */
+  const reloadTrackingData = async () => {
+    if (!id) return;
+
+    try {
+      const points = await dispatchRepository.getRecentDispatches(24);
+      const dispatchPoints = points as any;
+
+      if (dispatchPoints && dispatchPoints.historialRastreo) {
+        const trackingData = dispatchPoints.historialRastreo as TrackingPoint[];
+        setTrackingPoints(trackingData);
+        calculateStats(trackingData);
+        applyFilters(trackingData);
+        setLastUpdateTime(new Date().toLocaleTimeString('es-CO'));
+      }
+    } catch (err) {
+      console.error('Error reloading tracking data:', err);
+    }
+  };
 
   // Load dispatch and tracking history
   useEffect(() => {
@@ -53,15 +78,7 @@ export default function TrackingHistoryPage() {
         await selectDispatch(id);
 
         // Load tracking history
-        const points = await dispatchRepository.getRecentDispatches(24);
-        const dispatchPoints = points as any;
-
-        if (dispatchPoints && dispatchPoints.historialRastreo) {
-          const trackingData = dispatchPoints.historialRastreo as TrackingPoint[];
-          setTrackingPoints(trackingData);
-          calculateStats(trackingData);
-          applyFilters(trackingData);
-        }
+        await reloadTrackingData();
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Error al cargar historial';
         setError(errorMessage);
@@ -73,6 +90,34 @@ export default function TrackingHistoryPage() {
 
     loadData();
   }, [id, selectDispatch]);
+
+  // Setup WebSocket subscriptions for real-time updates
+  useEffect(() => {
+    if (!id) return;
+
+    // Subscribe to ambulance location updates
+    const unsubLocationUpdate = subscribe('ambulance_location_updated', (data: any) => {
+      // Check if this update is for our dispatch's ambulance
+      if (data.dispatchId === id) {
+        console.log('Location update received, reloading tracking data');
+        reloadTrackingData();
+      }
+    });
+
+    // Subscribe to dispatch status changes
+    const unsubStatusChange = subscribe('dispatch_status_changed', (data: any) => {
+      if (data.dispatchId === id) {
+        console.log('Status change detected, reloading data');
+        reloadTrackingData();
+      }
+    });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubLocationUpdate();
+      unsubStatusChange();
+    };
+  }, [id, subscribe]);
 
   // Apply filters when inputs change
   useEffect(() => {
@@ -251,13 +296,41 @@ export default function TrackingHistoryPage() {
           </button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Historial de Rastreo</h1>
-            <p className="text-gray-600">Despacho #{id}</p>
+            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+              <p>Despacho #{id}</p>
+              <div className="flex items-center gap-2">
+                {isConnected ? (
+                  <>
+                    <FiWifi className="text-green-600 text-sm" />
+                    <span className="text-green-600 font-medium">En línea</span>
+                  </>
+                ) : (
+                  <>
+                    <FiWifiOff className="text-red-600 text-sm" />
+                    <span className="text-red-600 font-medium">Sin conexión</span>
+                  </>
+                )}
+              </div>
+              {lastUpdateTime && (
+                <p className="text-gray-500">Actualizado: {lastUpdateTime}</p>
+              )}
+            </div>
           </div>
         </div>
-        <button onClick={exportToCSV} disabled={trackingPoints.length === 0} className="btn-primary flex items-center gap-2">
-          <FiDownload />
-          Descargar CSV
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={reloadTrackingData}
+            className="btn-secondary flex items-center gap-2"
+            title="Actualizar datos"
+          >
+            <FiNavigation />
+            Actualizar
+          </button>
+          <button onClick={exportToCSV} disabled={trackingPoints.length === 0} className="btn-primary flex items-center gap-2">
+            <FiDownload />
+            Descargar CSV
+          </button>
+        </div>
       </div>
 
       {/* Statistics Cards */}

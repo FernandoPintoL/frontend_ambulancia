@@ -5,9 +5,10 @@
 
 import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiHome, FiTruck, FiMapPin, FiActivity, FiMenu, FiX, FiLogOut, FiUser } from 'react-icons/fi';
+import { FiHome, FiTruck, FiMapPin, FiActivity, FiMenu, FiX, FiLogOut, FiUser, FiWifi, FiWifiOff } from 'react-icons/fi';
 import { useState } from 'react';
 import { useAuthStore } from '../../application/store/auth-store';
+import { useWebSocket } from '../../application/hooks/useWebSocket';
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,6 +19,7 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const { isConnected } = useWebSocket();
 
   const handleLogout = () => {
     logout();
@@ -118,8 +120,24 @@ const Layout = ({ children }: LayoutProps) => {
             <h2 className="text-lg font-semibold text-gray-900">
               {navItems.find((item) => isActive(item.path))?.label || 'HADS'}
             </h2>
-            <div className="text-sm text-gray-500">
-              {new Date().toLocaleDateString()}
+            <div className="flex items-center gap-4 text-sm">
+              {/* WebSocket Connection Status */}
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100">
+                {isConnected ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse"></div>
+                    <span className="text-green-600 font-medium">En línea</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-red-600"></div>
+                    <span className="text-red-600 font-medium">Sin conexión</span>
+                  </>
+                )}
+              </div>
+              <div className="text-gray-500">
+                {new Date().toLocaleDateString()}
+              </div>
             </div>
           </div>
         </header>

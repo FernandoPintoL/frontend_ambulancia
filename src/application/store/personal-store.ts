@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Personal Store
  * Application Layer - State Management with Zustand

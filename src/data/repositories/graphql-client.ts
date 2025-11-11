@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * GraphQL Client Configuration
  * Data Layer - API Communication

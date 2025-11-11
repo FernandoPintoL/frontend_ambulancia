@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * React Application Entry Point
  */

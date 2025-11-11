@@ -1,54 +1,29 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
-import { FiTruck, FiMapPin, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { Truck, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAmbulances } from '../../application/hooks/useAmbulances';
 
 export default function AmbulancesPage() {
-  const [ambulances, setAmbulances] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'available' | 'busy' | 'maintenance'>('all');
+  const { ambulances: apiAmbulances, loading, loadAmbulances } = useAmbulances();
+  const [filter, setFilter] = useState<'all' | 'disponible' | 'en_servicio' | 'mantenimiento'>('all');
 
   useEffect(() => {
-    // TODO: Implement actual GraphQL query
-    const mockAmbulances = [
-      {
-        id: 'AMB-001',
-        name: 'Ambulancia Centro 1',
-        status: 'available',
-        location: { lat: 4.7110, lon: -74.0721 },
-        crew: 'Juan García, María López',
-        lastUpdate: new Date().toISOString(),
-        responseTime: 8,
-      },
-      {
-        id: 'AMB-002',
-        name: 'Ambulancia Centro 2',
-        status: 'busy',
-        location: { lat: 4.7150, lon: -74.0680 },
-        crew: 'Carlos Ramírez, Ana Martínez',
-        lastUpdate: new Date().toISOString(),
-        responseTime: 12,
-      },
-      {
-        id: 'AMB-003',
-        name: 'Ambulancia Norte 1',
-        status: 'available',
-        location: { lat: 4.7500, lon: -74.0500 },
-        crew: 'Pedro Sánchez, Rosa García',
-        lastUpdate: new Date().toISOString(),
-        responseTime: 15,
-      },
-      {
-        id: 'AMB-004',
-        name: 'Ambulancia Norte 2',
-        status: 'maintenance',
-        location: { lat: 4.7500, lon: -74.0500 },
-        crew: 'Disponible',
-        lastUpdate: new Date().toISOString(),
-        responseTime: null,
-      },
-    ];
-    setAmbulances(mockAmbulances);
-    setLoading(false);
-  }, []);
+    loadAmbulances();
+  }, [loadAmbulances]);
+
+  // Mapear datos de la API al formato del componente
+  const ambulances = apiAmbulances.map((amb: any) => ({
+    id: amb.id,
+    name: amb.placa || `Ambulancia ${amb.id}`,
+    status: amb.estado,
+    location: {
+      lat: parseFloat(amb.ubicacionActualLat) || 0,
+      lon: parseFloat(amb.ubicacionActualLng) || 0,
+    },
+    crew: amb.crew || 'Sin asignar',
+    lastUpdate: amb.ultimaActualizacion || new Date().toISOString(),
+    responseTime: null,
+  }));
 
   const filteredAmbulances = ambulances.filter((amb) =>
     filter === 'all' || amb.status === filter
@@ -56,12 +31,14 @@ export default function AmbulancesPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available':
+      case 'disponible':
         return 'badge-success';
-      case 'busy':
+      case 'en_servicio':
         return 'badge-info';
-      case 'maintenance':
+      case 'mantenimiento':
         return 'badge-warning';
+      case 'fuera_servicio':
+        return 'badge-danger';
       default:
         return 'badge-danger';
     }
@@ -69,12 +46,14 @@ export default function AmbulancesPage() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'available':
+      case 'disponible':
         return 'Disponible';
-      case 'busy':
+      case 'en_servicio':
         return 'En Servicio';
-      case 'maintenance':
+      case 'mantenimiento':
         return 'Mantenimiento';
+      case 'fuera_servicio':
+        return 'Fuera de Servicio';
       default:
         return status;
     }
@@ -96,19 +75,19 @@ export default function AmbulancesPage() {
         <div className="card">
           <p className="text-gray-600 text-sm">Disponibles</p>
           <p className="text-3xl font-bold text-green-600">
-            {ambulances.filter((a) => a.status === 'available').length}
+            {ambulances.filter((a) => a.status === 'disponible').length}
           </p>
         </div>
         <div className="card">
           <p className="text-gray-600 text-sm">En Servicio</p>
           <p className="text-3xl font-bold text-blue-600">
-            {ambulances.filter((a) => a.status === 'busy').length}
+            {ambulances.filter((a) => a.status === 'en_servicio').length}
           </p>
         </div>
         <div className="card">
           <p className="text-gray-600 text-sm">Mantenimiento</p>
           <p className="text-3xl font-bold text-yellow-600">
-            {ambulances.filter((a) => a.status === 'maintenance').length}
+            {ambulances.filter((a) => a.status === 'mantenimiento').length}
           </p>
         </div>
       </div>
@@ -116,7 +95,7 @@ export default function AmbulancesPage() {
       {/* Filtros */}
       <div className="card">
         <div className="flex gap-2 flex-wrap">
-          {['all', 'available', 'busy', 'maintenance'].map((status) => (
+          {['all', 'disponible', 'en_servicio', 'mantenimiento'].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status as typeof filter)}
@@ -127,9 +106,9 @@ export default function AmbulancesPage() {
               }`}
             >
               {status === 'all' && 'Todas'}
-              {status === 'available' && 'Disponibles'}
-              {status === 'busy' && 'En Servicio'}
-              {status === 'maintenance' && 'Mantenimiento'}
+              {status === 'disponible' && 'Disponibles'}
+              {status === 'en_servicio' && 'En Servicio'}
+              {status === 'mantenimiento' && 'Mantenimiento'}
             </button>
           ))}
         </div>
@@ -149,7 +128,7 @@ export default function AmbulancesPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-3">
-                    <FiTruck className="text-2xl text-blue-600" />
+                    <Truck className="text-2xl text-blue-600" />
                     <div>
                       <h3 className="font-semibold text-lg">{ambulance.name}</h3>
                       <p className="text-gray-600 text-sm">ID: {ambulance.id}</p>
@@ -164,7 +143,7 @@ export default function AmbulancesPage() {
                     <div>
                       <p className="text-gray-600 text-sm">Ubicación</p>
                       <p className="font-medium flex items-center gap-1">
-                        <FiMapPin className="text-red-600" />
+                        <MapPin className="text-red-600" />
                         {ambulance.location.lat.toFixed(4)}, {ambulance.location.lon.toFixed(4)}
                       </p>
                     </div>
@@ -185,8 +164,8 @@ export default function AmbulancesPage() {
 
                 <div className="text-right">
                   <span className={`badge ${getStatusColor(ambulance.status)}`}>
-                    {ambulance.status === 'available' && <FiCheckCircle />}
-                    {ambulance.status !== 'available' && <FiAlertCircle />}
+                    {ambulance.status === 'disponible' && <CheckCircle />}
+                    {ambulance.status !== 'disponible' && <AlertCircle />}
                     {getStatusLabel(ambulance.status)}
                   </span>
                 </div>

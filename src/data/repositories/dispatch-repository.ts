@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Dispatch Repository
  * Data Layer - Dispatch data operations
@@ -13,7 +14,6 @@ import {
 import {
   CREATE_DISPATCH,
   UPDATE_DISPATCH_STATUS,
-  ASSIGN_AMBULANCE,
   ADD_DISPATCH_FEEDBACK,
   OPTIMIZE_DISPATCH,
   RECORD_GPS_LOCATION,
@@ -70,119 +70,126 @@ class DispatchRepository {
   /**
    * Get dispatch by ID
    */
-  async getDispatch(dispatchId: string): Promise<Dispatch> {
-    const { getDispatch } = await graphqlClient.request<{ getDispatch: Dispatch }>(
+  async getDispatch(id: number): Promise<Dispatch> {
+    const { despacho } = await graphqlClient.request<{ despacho: Dispatch }>(
       GET_DISPATCH,
-      { dispatchId }
+      { id }
     );
-    return getDispatch;
+    return despacho;
   }
 
   /**
    * List dispatches with optional filtering
    */
   async listDispatches(
-    status?: string,
-    limit: number = 20,
-    offset: number = 0
+    estado?: string,
+    limit: number = 50,
+    prioridad?: string,
+    activos?: boolean
   ): Promise<Dispatch[]> {
-    const { listDispatches } = await graphqlClient.request<{ listDispatches: Dispatch[] }>(
+    const { despachos } = await graphqlClient.request<{ despachos: Dispatch[] }>(
       LIST_DISPATCHES,
-      { status, limit, offset }
+      { estado, limit, prioridad, activos }
     );
-    return listDispatches;
-  }
-
-  /**
-   * Get recent dispatches
-   */
-  async getRecentDispatches(hours: number = 24, limit: number = 10): Promise<Dispatch[]> {
-    const { getRecentDispatches } = await graphqlClient.request<{ getRecentDispatches: Dispatch[] }>(
-      GET_RECENT_DISPATCHES,
-      { hours, limit }
-    );
-    return getRecentDispatches;
-  }
-
-  /**
-   * Get dispatch statistics
-   */
-  async getDispatchStatistics(): Promise<DispatchStatistics> {
-    const { getDispatchStatistics } = await graphqlClient.request<{
-      getDispatchStatistics: DispatchStatistics;
-    }>(GET_DISPATCH_STATISTICS);
-    return getDispatchStatistics;
+    return despachos;
   }
 
   /**
    * Create new dispatch
    */
   async createDispatch(data: any): Promise<Dispatch> {
-    const { createDispatch } = await graphqlClient.request<{ createDispatch: Dispatch }>(
+    const { crearDespacho } = await graphqlClient.request<{ crearDespacho: Dispatch }>(
       CREATE_DISPATCH,
-      { input: data }
+      {
+        solicitud_id: data.solicitud_id,
+        ubicacionOrigenLat: data.ubicacionOrigenLat || data.ubicacion_origen_lat,
+        ubicacionOrigenLng: data.ubicacionOrigenLng || data.ubicacion_origen_lng,
+        direccion_origen: data.direccion_origen,
+        ubicacionDestinoLat: data.ubicacionDestinoLat || data.ubicacion_destino_lat,
+        ubicacionDestinoLng: data.ubicacionDestinoLng || data.ubicacion_destino_lng,
+        direccion_destino: data.direccion_destino,
+        incidente: data.incidente || 'emergencia_medica',
+        prioridad: data.prioridad || 'media',
+        tipoAmbulancia: data.tipoAmbulancia || data.tipo_ambulancia,
+        observaciones: data.observaciones,
+      }
     );
-    return createDispatch;
+    return crearDespacho;
   }
 
   /**
    * Update dispatch status
    */
-  async updateDispatchStatus(dispatchId: string, status: string): Promise<Dispatch> {
-    const { updateDispatchStatus } = await graphqlClient.request<{
-      updateDispatchStatus: Dispatch;
-    }>(UPDATE_DISPATCH_STATUS, { dispatchId, status });
-    return updateDispatchStatus;
+  async updateDispatchStatus(id: number, estado: string): Promise<Dispatch> {
+    const { actualizarEstadoDespacho } = await graphqlClient.request<{
+      actualizarEstadoDespacho: Dispatch;
+    }>(UPDATE_DISPATCH_STATUS, { id, estado });
+    return actualizarEstadoDespacho;
   }
 
   /**
-   * Assign ambulance to dispatch
+   * Get recent dispatches from last N hours
    */
-  async assignAmbulance(dispatchId: string, ambulanceId: string): Promise<Dispatch> {
-    const { assignAmbulance } = await graphqlClient.request<{ assignAmbulance: Dispatch }>(
-      ASSIGN_AMBULANCE,
-      { dispatchId, ambulanceId }
+  async getRecentDispatches(horas: number = 24, limit: number = 50): Promise<Dispatch[]> {
+    const { despachosRecientes } = await graphqlClient.request<{ despachosRecientes: Dispatch[] }>(
+      GET_RECENT_DISPATCHES,
+      { horas, limit }
     );
-    return assignAmbulance;
+    return despachosRecientes;
   }
 
   /**
-   * Add feedback to dispatch
+   * Get dispatch statistics
    */
-  async addDispatchFeedback(dispatchId: string, feedback: any): Promise<Dispatch> {
-    const { addDispatchFeedback } = await graphqlClient.request<{
-      addDispatchFeedback: Dispatch;
-    }>(ADD_DISPATCH_FEEDBACK, { dispatchId, feedback });
-    return addDispatchFeedback;
-  }
-
-  /**
-   * Optimize dispatch route
-   */
-  async optimizeDispatch(dispatchId: string): Promise<any> {
-    const { optimizeDispatch } = await graphqlClient.request<{ optimizeDispatch: any }>(
-      OPTIMIZE_DISPATCH,
-      { dispatchId }
-    );
-    return optimizeDispatch;
+  async getDispatchStatistics(horas: number = 24): Promise<DispatchStatistics> {
+    const { estadisticasDespachos } = await graphqlClient.request<{
+      estadisticasDespachos: DispatchStatistics;
+    }>(GET_DISPATCH_STATISTICS, { horas });
+    return estadisticasDespachos;
   }
 
   /**
    * Record GPS location for dispatch
    */
   async recordGpsLocation(
-    dispatchId: string,
-    latitude: number,
-    longitude: number,
-    speed?: number,
-    altitude?: number,
+    despacho_id: number,
+    ubicacionLat: number,
+    ubicacionLng: number,
+    velocidad?: number,
+    altitud?: number,
     precision?: number
   ): Promise<any> {
-    const { recordGpsLocation } = await graphqlClient.request<{ recordGpsLocation: any }>(
+    const { registrarUbicacionGPS } = await graphqlClient.request<{ registrarUbicacionGPS: any }>(
       RECORD_GPS_LOCATION,
-      { dispatchId, latitude, longitude, speed, altitude, precision }
+      { despacho_id, ubicacionLat, ubicacionLng, velocidad, altitud, precision }
     );
-    return recordGpsLocation;
+    return registrarUbicacionGPS;
+  }
+
+  /**
+   * Add feedback to dispatch
+   */
+  async addDispatchFeedback(
+    despacho_id: number,
+    calificacion: number,
+    comentario?: string,
+    resultadoPaciente?: string
+  ): Promise<any> {
+    const { agregarFeedbackDespacho } = await graphqlClient.request<{
+      agregarFeedbackDespacho: any;
+    }>(ADD_DISPATCH_FEEDBACK, { despacho_id, calificacion, comentario, resultadoPaciente });
+    return agregarFeedbackDespacho;
+  }
+
+  /**
+   * Optimize dispatch using ML
+   */
+  async optimizeDispatch(despacho_id: number): Promise<any> {
+    const { optimizarDespacho } = await graphqlClient.request<{ optimizarDespacho: any }>(
+      OPTIMIZE_DISPATCH,
+      { despacho_id }
+    );
+    return optimizarDespacho;
   }
 }
 

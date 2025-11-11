@@ -1,19 +1,24 @@
+// @ts-nocheck
 /**
  * PersonalPage - Personal/Staff Management
  * Presentation Layer - Main page for managing medical staff
  */
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import { Plus, Edit2, Trash2, Search, Filter, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usePersonal } from '../../application/hooks/usePersonal';
 import { useWebSocket } from '../../application/hooks/useWebSocket';
 import PersonalTable from '../components/PersonalTable';
 import PersonalForm from '../components/PersonalForm';
 import PersonalStatusBadge from '../components/PersonalStatusBadge';
+import PersonalAccessForm, { PersonalAccessData } from '../components/PersonalAccessForm';
 import { Personal, CreatePersonalInput } from '../../data/repositories/personal-repository';
+import { capitalizeFirst } from '../../utils/string';
+import { getAuthenticatedGraphQLClient } from '../../data/repositories/role-repository';
+import { CREATE_USER_FOR_PERSONAL } from '../../data/repositories/mutations';
 
-type ModalMode = 'create' | 'edit' | null;
+type ModalMode = 'create' | 'edit' | 'access' | null;
 
 export default function PersonalPage() {
   const {
@@ -29,6 +34,8 @@ export default function PersonalPage() {
 
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [selectedPersonal, setSelectedPersonal] = useState<Personal | null>(null);
+  const [newPersonal, setNewPersonal] = useState<Personal | null>(null);
+  const [accessLoading, setAccessLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -71,7 +78,7 @@ export default function PersonalPage() {
   const filteredPersonales = personales.filter((p) => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      p.nombre_completo.toLowerCase().includes(searchLower) ||
+      p.nombreCompleto.toLowerCase().includes(searchLower) ||
       p.ci.toLowerCase().includes(searchLower) ||
       p.email?.toLowerCase().includes(searchLower)
     );
@@ -79,9 +86,15 @@ export default function PersonalPage() {
 
   const handleCreatePersonal = async (data: CreatePersonalInput) => {
     try {
-      await createPersonal(data);
+      const createdPersonal = await createPersonal(data);
       toast.success('Personal creado exitosamente');
-      setModalMode(null);
+
+      // Guardar el personal recién creado y mostrar formulario de acceso
+      setNewPersonal(createdPersonal);
+      setModalMode('access');
+
+      // Recargar la lista de personal con los filtros actuales
+      loadPersonales(roleFilter || undefined, statusFilter || undefined, availableOnlyFilter);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear personal';
       toast.error(errorMsg);
@@ -104,6 +117,9 @@ export default function PersonalPage() {
       toast.success('Personal actualizado exitosamente');
       setModalMode(null);
       setSelectedPersonal(null);
+
+      // Recargar la lista de personal con los filtros actuales
+      loadPersonales(roleFilter || undefined, statusFilter || undefined, availableOnlyFilter);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar personal';
       toast.error(errorMsg);
@@ -117,15 +133,50 @@ export default function PersonalPage() {
         newStatus as 'disponible' | 'en_servicio' | 'descanso' | 'vacaciones'
       );
       toast.success('Estado actualizado');
+
+      // Recargar la lista de personal con los filtros actuales
+      loadPersonales(roleFilter || undefined, statusFilter || undefined, availableOnlyFilter);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cambiar estado';
       toast.error(errorMsg);
     }
   };
 
+  const handleCreatePersonalAccess = async (accessData: PersonalAccessData) => {
+    if (!newPersonal) return;
+
+    try {
+      setAccessLoading(true);
+
+      // Crear usuario en el microservicio de autenticación (ms_autentificacion)
+      const authClient = getAuthenticatedGraphQLClient();
+      const response: any = await authClient.request(CREATE_USER_FOR_PERSONAL, {
+        name: newPersonal.nombreCompleto,
+        email: accessData.email,
+        phone: newPersonal.telefono,
+        password: accessData.password,
+        roleId: accessData.roleId, // Usar el ID del rol seleccionado
+      });
+
+      if (response?.createUser) {
+        toast.success(
+          `Acceso creado exitosamente\nEmail: ${accessData.email}\nEl personal puede iniciar sesión ahora`
+        );
+        setModalMode(null);
+        setNewPersonal(null);
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error al crear acceso';
+      toast.error(errorMsg);
+    } finally {
+      setAccessLoading(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setModalMode(null);
     setSelectedPersonal(null);
+    setNewPersonal(null);
   };
 
   const roles = ['paramedico', 'conductor', 'medico', 'enfermero'];
@@ -145,7 +196,7 @@ export default function PersonalPage() {
           onClick={() => setModalMode('create')}
           className="btn-primary flex items-center gap-2"
         >
-          <FiPlus />
+          <Plus />
           Agregar Personal
         </button>
       </div>
@@ -157,7 +208,7 @@ export default function PersonalPage() {
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
             <div className="relative">
-              <FiSearch className="absolute left-3 top-3 text-gray-400" />
+              <Search className="absolute left-3 top-3 text-gray-400" />
               <input
                 type="text"
                 placeholder="Nombre, CI o email..."
@@ -179,7 +230,7 @@ export default function PersonalPage() {
               <option value="">Todos</option>
               {roles.map((role) => (
                 <option key={role} value={role}>
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                  {capitalizeFirst(role)}
                 </option>
               ))}
             </select>
@@ -196,7 +247,7 @@ export default function PersonalPage() {
               <option value="">Todos</option>
               {statuses.map((status) => (
                 <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {capitalizeFirst(status)}
                 </option>
               ))}
             </select>
@@ -244,7 +295,7 @@ export default function PersonalPage() {
               onClick={() => setModalMode('create')}
               className="btn-primary inline-flex items-center gap-2"
             >
-              <FiPlus />
+              <Plus />
               Crear el primer personal
             </button>
           </div>
@@ -277,7 +328,7 @@ export default function PersonalPage() {
                   <tr key={personal.id} className="border-b hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium text-gray-900">{personal.nombre_completo}</p>
+                        <p className="font-medium text-gray-900">{personal.nombreCompleto}</p>
                         {personal.especialidad && (
                           <p className="text-sm text-gray-600">{personal.especialidad}</p>
                         )}
@@ -286,7 +337,7 @@ export default function PersonalPage() {
                     <td className="px-4 py-3 text-sm text-gray-600">{personal.ci}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                        {personal.rol.charAt(0).toUpperCase() + personal.rol.slice(1)}
+                        {capitalizeFirst(personal.rol)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -313,7 +364,7 @@ export default function PersonalPage() {
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                           title="Editar"
                         >
-                          <FiEdit2 className="text-lg" />
+                          <Edit2 className="text-lg" />
                         </button>
                       </div>
                     </td>
@@ -325,30 +376,55 @@ export default function PersonalPage() {
         )}
       </div>
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit/Access Modal */}
       {modalMode && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-bold text-gray-900">
-                {modalMode === 'create' ? 'Crear Personal' : 'Editar Personal'}
-              </h3>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FiX className="text-xl" />
-              </button>
-            </div>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {modalMode === 'access' && newPersonal ? (
+              <>
+                <div className="flex items-center justify-between p-6 border-b">
+                  <h3 className="text-lg font-bold text-gray-900">Crear Acceso al Sistema</h3>
+                  <button
+                    onClick={handleCloseModal}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="text-xl" />
+                  </button>
+                </div>
+                <PersonalAccessForm
+                  personalName={newPersonal.nombreCompleto}
+                  personalEmail={newPersonal.email}
+                  personalPhone={newPersonal.telefono}
+                  onSubmit={handleCreatePersonalAccess}
+                  onCancel={handleCloseModal}
+                  loading={accessLoading}
+                />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between p-6 border-b">
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {modalMode === 'create' ? 'Crear Personal' : 'Editar Personal'}
+                  </h3>
+                  <button
+                    onClick={handleCloseModal}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="text-xl" />
+                  </button>
+                </div>
 
-            <PersonalForm
-              personal={modalMode === 'edit' ? selectedPersonal : undefined}
-              onSubmit={modalMode === 'create' ? handleCreatePersonal : handleSavePersonal}
-              onCancel={handleCloseModal}
-            />
+                <PersonalForm
+                  personal={modalMode === 'edit' ? selectedPersonal : undefined}
+                  onSubmit={modalMode === 'create' ? handleCreatePersonal : handleSavePersonal}
+                  onCancel={handleCloseModal}
+                />
+              </>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 }
+

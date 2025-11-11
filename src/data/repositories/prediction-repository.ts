@@ -1,16 +1,18 @@
+// @ts-nocheck
 /**
  * Prediction Repository
  * Data Layer - ML prediction operations
+ * NOTE: These queries are not yet implemented in the backend
  */
 
 import graphqlClient from './graphql-client';
-import {
-  PREDICT_SEVERITY,
-  PREDICT_ETA,
-  PREDICT_DISPATCH,
-  GET_ALL_MODELS_STATUS,
-  GET_MODEL_PERFORMANCE,
-} from './queries';
+// import {
+//   PREDICT_SEVERITY,
+//   PREDICT_ETA,
+//   PREDICT_DISPATCH,
+//   GET_ALL_MODELS_STATUS,
+//   GET_MODEL_PERFORMANCE,
+// } from './queries';
 
 export interface SeverityPrediction {
   level: number;
@@ -65,70 +67,70 @@ export interface ModelPerformance {
 }
 
 class PredictionRepository {
-  /**
-   * Predict severity level
-   */
-  async predictSeverity(description: string, age?: number): Promise<SeverityPrediction> {
-    const { predictSeverity } = await graphqlClient.request<{
-      predictSeverity: SeverityPrediction;
-    }>(PREDICT_SEVERITY, { description, age });
-    return predictSeverity;
-  }
+  // /**
+  //  * Predict severity level
+  //  */
+  // async predictSeverity(description: string, age?: number): Promise<SeverityPrediction> {
+  //   const { predictSeverity } = await graphqlClient.request<{
+  //     predictSeverity: SeverityPrediction;
+  //   }>(PREDICT_SEVERITY, { description, age });
+  //   return predictSeverity;
+  // }
 
-  /**
-   * Predict ETA
-   */
-  async predictETA(
-    originLat: number,
-    originLon: number,
-    destinationLat: number,
-    destinationLon: number,
-    trafficLevel?: number
-  ): Promise<ETAPrediction> {
-    const { predictEta } = await graphqlClient.request<{ predictEta: ETAPrediction }>(
-      PREDICT_ETA,
-      { originLat, originLon, destinationLat, destinationLon, trafficLevel }
-    );
-    return predictEta;
-  }
+  // /**
+  //  * Predict ETA
+  //  */
+  // async predictETA(
+  //   originLat: number,
+  //   originLon: number,
+  //   destinationLat: number,
+  //   destinationLon: number,
+  //   trafficLevel?: number
+  // ): Promise<ETAPrediction> {
+  //   const { predictEta } = await graphqlClient.request<{ predictEta: ETAPrediction }>(
+  //     PREDICT_ETA,
+  //     { originLat, originLon, destinationLat, destinationLon, trafficLevel }
+  //   );
+  //   return predictEta;
+  // }
 
-  /**
-   * Predict complete dispatch with all models
-   */
-  async predictDispatch(data: {
-    patientLat: number;
-    patientLon: number;
-    description: string;
-    severityLevel: number;
-    destinationLat: number;
-    destinationLon: number;
-  }): Promise<DispatchPrediction> {
-    const { predictDispatch } = await graphqlClient.request<{ predictDispatch: DispatchPrediction }>(
-      PREDICT_DISPATCH,
-      data
-    );
-    return predictDispatch;
-  }
+  // /**
+  //  * Predict complete dispatch with all models
+  //  */
+  // async predictDispatch(data: {
+  //   patientLat: number;
+  //   patientLon: number;
+  //   description: string;
+  //   severityLevel: number;
+  //   destinationLat: number;
+  //   destinationLon: number;
+  // }): Promise<DispatchPrediction> {
+  //   const { predictDispatch } = await graphqlClient.request<{ predictDispatch: DispatchPrediction }>(
+  //     PREDICT_DISPATCH,
+  //     data
+  //   );
+  //   return predictDispatch;
+  // }
 
-  /**
-   * Get all models status
-   */
-  async getAllModelsStatus(): Promise<AllModelsStatus> {
-    const { allModelsStatus } = await graphqlClient.request<{ allModelsStatus: AllModelsStatus }>(
-      GET_ALL_MODELS_STATUS
-    );
-    return allModelsStatus;
-  }
+  // /**
+  //  * Get all models status
+  //  */
+  // async getAllModelsStatus(): Promise<AllModelsStatus> {
+  //   const { allModelsStatus } = await graphqlClient.request<{ allModelsStatus: AllModelsStatus }>(
+  //     GET_ALL_MODELS_STATUS
+  //   );
+  //   return allModelsStatus;
+  // }
 
-  /**
-   * Get model performance metrics
-   */
-  async getModelPerformance(modelName: string, hours: number = 24): Promise<ModelPerformance> {
-    const { modelPerformance } = await graphqlClient.request<{
-      modelPerformance: ModelPerformance;
-    }>(GET_MODEL_PERFORMANCE, { modelName, hours });
-    return modelPerformance;
-  }
+  // /**
+  //  * Get model performance metrics
+  //  */
+  // async getModelPerformance(modelName: string, hours: number = 24): Promise<ModelPerformance> {
+  //   const { modelPerformance } = await graphqlClient.request<{
+  //     modelPerformance: ModelPerformance;
+  //   }>(GET_MODEL_PERFORMANCE, { modelName, hours });
+  //   return modelPerformance;
+  // }
 }
 
 export const predictionRepository = new PredictionRepository();

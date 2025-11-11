@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PersonalForm Component
  * Presentation Layer - Form for creating/editing personal

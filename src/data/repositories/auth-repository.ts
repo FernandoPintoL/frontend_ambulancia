@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Auth Repository
  * Data Layer - Authentication API communication

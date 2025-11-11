@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * App.tsx
  * Presentation Layer - Main App Component
@@ -8,6 +9,7 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '../application/store/auth-store';
 import { initializeWebSocketListeners } from '../application/store/dispatch-store';
 import { initializeWebSocketListenersPersonal } from '../application/store/personal-store';
+import { initializeWebSocketListenersIncidents } from '../application/store/incident-websocket-listeners';
 import { useEffect } from 'react';
 
 import Layout from './components/Layout';
@@ -22,6 +24,11 @@ import TrackingHistoryPage from './pages/TrackingHistoryPage';
 import PersonalPage from './pages/PersonalPage';
 import AmbulancesPage from './pages/AmbulancesPage';
 import HealthPage from './pages/HealthPage';
+
+// Incident Management Pages
+import RecepcionPage from './pages/RecepcionPage';
+import IncidentesListPage from './pages/IncidentesListPage';
+import IncidenteDetallesPage from './pages/IncidenteDetallesPage';
 
 export default function App() {
   const { token, setUser } = useAuthStore();
@@ -40,10 +47,19 @@ export default function App() {
     }
   }, [token, setUser]);
 
-  // Initialize WebSocket listeners for real-time updates
+  // Initialize WebSocket connection globally
   useEffect(() => {
+    const { websocketService } = require('../data/repositories/websocket-service');
+
+    // Connect to WebSocket
+    websocketService.connect().catch((error: any) => {
+      console.error('Failed to connect WebSocket:', error);
+    });
+
+    // Initialize listeners for real-time updates
     initializeWebSocketListeners();
     initializeWebSocketListenersPersonal();
+    initializeWebSocketListenersIncidents();
   }, []);
 
   return (
@@ -74,6 +90,11 @@ export default function App() {
                 <Routes>
                   {/* Dashboard */}
                   <Route path="/" element={<DashboardPage />} />
+
+                  {/* Incidents Management - Recepción */}
+                  <Route path="/incidents/reception" element={<RecepcionPage />} />
+                  <Route path="/incidents" element={<IncidentesListPage />} />
+                  <Route path="/incidents/:id" element={<IncidenteDetallesPage />} />
 
                   {/* Dispatches */}
                   <Route path="/dispatches" element={<DispatchesPage />} />

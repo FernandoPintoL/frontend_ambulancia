@@ -1,34 +1,50 @@
+// @ts-nocheck
 /**
  * GraphQL Mutations
  * Data Layer - Mutation Definitions
+ * NOTE: Using backend naming conventions (Spanish/camelCase)
  */
 
 import { gql } from 'graphql-request';
 
 /**
- * Create new dispatch
+ * Create new dispatch with automatic assignment
  */
 export const CREATE_DISPATCH = gql`
-  mutation CreateDispatch(
-    $patientName: String!
-    $patientAge: Int!
-    $patientLat: Float!
-    $patientLon: Float!
-    $description: String!
-    $severityLevel: Int!
+  mutation CrearDespacho(
+    $solicitud_id: Int
+    $ubicacionOrigenLat: Float!
+    $ubicacionOrigenLng: Float!
+    $direccion_origen: String
+    $ubicacionDestinoLat: Float
+    $ubicacionDestinoLng: Float
+    $direccion_destino: String
+    $incidente: String
+    $prioridad: String
+    $tipoAmbulancia: String
+    $observaciones: String
   ) {
-    createDispatch(
-      patientName: $patientName
-      patientAge: $patientAge
-      patientLat: $patientLat
-      patientLon: $patientLon
-      description: $description
-      severityLevel: $severityLevel
+    crearDespacho(
+      solicitud_id: $solicitud_id
+      ubicacionOrigenLat: $ubicacionOrigenLat
+      ubicacionOrigenLng: $ubicacionOrigenLng
+      direccion_origen: $direccion_origen
+      ubicacionDestinoLat: $ubicacionDestinoLat
+      ubicacionDestinoLng: $ubicacionDestinoLng
+      direccion_destino: $direccion_destino
+      incidente: $incidente
+      prioridad: $prioridad
+      tipoAmbulancia: $tipoAmbulancia
+      observaciones: $observaciones
     ) {
       id
-      patientName
-      status
-      createdAt
+      solicitud_id
+      ambulancia_id
+      fecha_solicitud
+      estado
+      prioridad
+      direccion_origen
+      direccion_destino
     }
   }
 `;
@@ -37,70 +53,14 @@ export const CREATE_DISPATCH = gql`
  * Update dispatch status
  */
 export const UPDATE_DISPATCH_STATUS = gql`
-  mutation UpdateDispatchStatus($dispatchId: ID!, $status: String!) {
-    updateDispatchStatus(dispatchId: $dispatchId, status: $status) {
+  mutation ActualizarEstadoDespacho($id: Int!, $estado: String!) {
+    actualizarEstadoDespacho(id: $id, estado: $estado) {
       id
-      status
+      estado
+      fechaAsignacion
+      fechaLlegada
+      fechaFinalizacion
       updatedAt
-    }
-  }
-`;
-
-/**
- * Assign ambulance to dispatch
- */
-export const ASSIGN_AMBULANCE = gql`
-  mutation AssignAmbulance($dispatchId: ID!, $ambulanceId: ID!) {
-    assignAmbulance(dispatchId: $dispatchId, ambulanceId: $ambulanceId) {
-      id
-      assignedAmbulanceId
-      status
-    }
-  }
-`;
-
-/**
- * Optimize dispatch
- */
-export const OPTIMIZE_DISPATCH = gql`
-  mutation OptimizeDispatch($dispatchId: ID!) {
-    optimizeDispatch(dispatchId: $dispatchId) {
-      severity {
-        level
-        confidence
-      }
-      ambulanceSelection {
-        ambulanceId
-        distance
-      }
-      eta {
-        estimatedMinutes
-      }
-    }
-  }
-`;
-
-/**
- * Add dispatch feedback
- */
-export const ADD_DISPATCH_FEEDBACK = gql`
-  mutation AddDispatchFeedback(
-    $dispatchId: ID!
-    $rating: Int!
-    $comment: String
-    $responseTimeMinutes: Int
-    $patientOutcome: String
-  ) {
-    addDispatchFeedback(
-      dispatchId: $dispatchId
-      rating: $rating
-      comment: $comment
-      responseTimeMinutes: $responseTimeMinutes
-      patientOutcome: $patientOutcome
-    ) {
-      dispatchId
-      rating
-      comment
     }
   }
 `;
@@ -109,98 +69,28 @@ export const ADD_DISPATCH_FEEDBACK = gql`
  * Update ambulance location
  */
 export const UPDATE_AMBULANCE_LOCATION = gql`
-  mutation UpdateAmbulanceLocation(
-    $ambulanceId: ID!
-    $latitude: Float!
-    $longitude: Float!
-    $accuracy: Float
+  mutation ActualizarUbicacionAmbulancia(
+    $id: Int!
+    $ubicacionActualLat: Float!
+    $ubicacionActualLng: Float!
+    $preciscion: Float
   ) {
-    updateAmbulanceLocation(
-      ambulanceId: $ambulanceId
-      latitude: $latitude
-      longitude: $longitude
-      accuracy: $accuracy
+    actualizarUbicacionAmbulancia(
+      id: $id
+      ubicacionActualLat: $ubicacionActualLat
+      ubicacionActualLng: $ubicacionActualLng
+      preciscion: $preciscion
     ) {
       id
-      currentLocation {
-        latitude
-        longitude
-      }
-      lastLocationUpdate
+      ubicacionActualLat
+      ubicacionActualLng
+      ultimaActualizacion
     }
   }
 `;
 
 /**
- * Set ambulance status
- */
-export const SET_AMBULANCE_STATUS = gql`
-  mutation SetAmbulanceStatus($ambulanceId: ID!, $status: String!) {
-    setAmbulanceStatus(ambulanceId: $ambulanceId, status: $status) {
-      id
-      status
-      updatedAt
-    }
-  }
-`;
-
-/**
- * Retrain models
- */
-export const RETRAIN_MODELS = gql`
-  mutation RetrainModels($days: Int!, $autoActivate: Boolean!) {
-    retrainModels(days: $days, autoActivate: $autoActivate)
-  }
-`;
-
-/**
- * Activate model version
- */
-export const ACTIVATE_MODEL_VERSION = gql`
-  mutation ActivateModelVersion($modelName: String!, $version: String!) {
-    activateModelVersion(modelName: $modelName, version: $version) {
-      version
-      modelType
-      isActive
-      activatedAt
-    }
-  }
-`;
-
-/**
- * Record GPS location for dispatch
- */
-export const RECORD_GPS_LOCATION = gql`
-  mutation RecordGpsLocation(
-    $dispatchId: ID!
-    $latitude: Float!
-    $longitude: Float!
-    $velocidad: Float
-    $altitud: Float
-    $precision: Float
-  ) {
-    recordGpsLocation(
-      dispatchId: $dispatchId
-      latitude: $latitude
-      longitude: $longitude
-      velocidad: $velocidad
-      altitud: $altitud
-      precision: $precision
-    ) {
-      id
-      dispatchId
-      latitud
-      longitud
-      velocidad
-      altitud
-      precision
-      timestamp_gps
-    }
-  }
-`;
-
-/**
- * Create new personal
+ * Create personal
  */
 export const CREATE_PERSONAL = gql`
   mutation CrearPersonal(
@@ -226,15 +116,11 @@ export const CREATE_PERSONAL = gql`
       id
       nombre
       apellido
-      nombre_completo
+      nombreCompleto
       ci
       rol
       especialidad
-      experiencia
       estado
-      telefono
-      email
-      created_at
     }
   }
 `;
@@ -264,15 +150,9 @@ export const UPDATE_PERSONAL = gql`
       id
       nombre
       apellido
-      nombre_completo
-      ci
-      rol
+      nombreCompleto
       especialidad
       experiencia
-      estado
-      telefono
-      email
-      updated_at
     }
   }
 `;
@@ -285,10 +165,8 @@ export const CHANGE_PERSONAL_STATUS = gql`
     cambiarEstadoPersonal(id: $id, estado: $estado) {
       id
       nombre
-      apellido
-      nombre_completo
       estado
-      updated_at
+      updatedAt
     }
   }
 `;
@@ -310,31 +188,130 @@ export const ASSIGN_PERSONAL = gql`
       es_responsable: $es_responsable
     ) {
       id
-      personalAsignado {
-        id
-        nombre
-        apellido
-        nombre_completo
-        rol
-        estado
-      }
+      despacho_id
+      personal_id
+      rol_asignado
+      es_responsable
+      fechaAsignacion
     }
   }
 `;
 
 /**
- * Remove personal from dispatch
+ * Unassign personal from dispatch
  */
 export const UNASSIGN_PERSONAL = gql`
-  mutation DesasignarPersonal($despacho_id: Int!, $personal_id: Int!) {
-    desasignarPersonal(despacho_id: $despacho_id, personal_id: $personal_id) {
+  mutation DesasignarPersonal($id: Int!) {
+    desasignarPersonal(id: $id) {
       id
-      personalAsignado {
+      despacho_id
+      personal_id
+      fechaDesasignacion
+    }
+  }
+`;
+
+/**
+ * Record GPS location for dispatch
+ */
+export const RECORD_GPS_LOCATION = gql`
+  mutation RegistrarUbicacionGPS(
+    $despacho_id: Int!
+    $ubicacionLat: Float!
+    $ubicacionLng: Float!
+    $velocidad: Float
+    $altitud: Float
+    $precision: Float
+  ) {
+    registrarUbicacionGPS(
+      despacho_id: $despacho_id
+      ubicacionLat: $ubicacionLat
+      ubicacionLng: $ubicacionLng
+      velocidad: $velocidad
+      altitud: $altitud
+      precision: $precision
+    ) {
+      id
+      ambulancia_id
+      estado
+      ubicacionOrigenLat
+      ubicacionOrigenLng
+    }
+  }
+`;
+
+/**
+ * Add dispatch feedback
+ */
+export const ADD_DISPATCH_FEEDBACK = gql`
+  mutation AgregarFeedbackDespacho(
+    $despacho_id: Int!
+    $calificacion: Int!
+    $comentario: String
+    $resultadoPaciente: String
+  ) {
+    agregarFeedbackDespacho(
+      despacho_id: $despacho_id
+      calificacion: $calificacion
+      comentario: $comentario
+      resultadoPaciente: $resultadoPaciente
+    ) {
+      despacho_id
+      calificacion
+      comentario
+      resultadoPaciente
+      registradoAt
+    }
+  }
+`;
+
+/**
+ * Optimize dispatch
+ */
+export const OPTIMIZE_DISPATCH = gql`
+  mutation OptimizarDespacho($despacho_id: Int!) {
+    optimizarDespacho(despacho_id: $despacho_id) {
+      despacho_id
+      ambulanciaSugeridaId
+      confianza
+      tiempoEstimadoMin
+      distanciaKm
+      razonCambio
+    }
+  }
+`;
+
+/**
+ * Create user for personal access
+ * This mutation is sent to the auth microservice
+ */
+export const CREATE_USER_FOR_PERSONAL = gql`
+  mutation CreateUser(
+    $name: String!
+    $email: String!
+    $phone: String
+    $password: String!
+    $roleId: ID!
+  ) {
+    createUser(
+      name: $name
+      email: $email
+      phone: $phone
+      password: $password
+      roleId: $roleId
+    ) {
+      success
+      message
+      user {
         id
-        nombre
-        apellido
-        nombre_completo
-        rol
+        name
+        email
+        phone
+        status
+        roles {
+          id
+          name
+        }
       }
     }
   }

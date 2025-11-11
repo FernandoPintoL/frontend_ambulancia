@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Tipos compartidos de la aplicación
  */

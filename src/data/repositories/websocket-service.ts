@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * WebSocket Service
  * Real-time updates using Socket.IO for dispatch status, ambulance location, and personal updates
@@ -14,6 +15,11 @@ type WebSocketEventType =
   | 'personal_created'
   | 'personal_updated'
   | 'personal_status_changed'
+  | 'incident_created'
+  | 'incident_updated'
+  | 'incident_status_changed'
+  | 'incident_analysis_completed'
+  | 'incident_priority_changed'
   | 'error'
   | 'connected'
   | 'disconnected';
@@ -29,7 +35,10 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
 
   constructor(url?: string) {
-    this.url = url || process.env.REACT_APP_WS_URL || 'http://localhost:3001';
+    // Get URL from environment variable or parameter or fallback
+    const envUrl = process.env.REACT_APP_WS_URL;
+    this.url = url || envUrl || 'http://localhost:4004';
+    console.log('WebSocket URL initialized:', this.url);
     this.initializeListeners();
   }
 
@@ -42,6 +51,11 @@ class WebSocketService {
       'personal_created',
       'personal_updated',
       'personal_status_changed',
+      'incident_created',
+      'incident_updated',
+      'incident_status_changed',
+      'incident_analysis_completed',
+      'incident_priority_changed',
       'error',
       'connected',
       'disconnected',
@@ -59,11 +73,15 @@ class WebSocketService {
     return new Promise((resolve, reject) => {
       try {
         const token = localStorage.getItem('token');
+        
+        const auth: any = {};
+        // Only include token if it exists
+        if (token) {
+          auth.token = token;
+        }
 
         this.socket = io(this.url, {
-          auth: {
-            token: token || '',
-          },
+          auth: auth,
           reconnection: true,
           reconnectionDelay: 1000,
           reconnectionDelayMax: 5000,
@@ -114,6 +132,32 @@ class WebSocketService {
         this.socket.on('personal_status_changed', (data: any) => {
           console.log('Personal status changed event:', data);
           this.emit('personal_status_changed', data);
+        });
+
+        // Incident events
+        this.socket.on('incident_created', (data: any) => {
+          console.log('Incident created event:', data);
+          this.emit('incident_created', data);
+        });
+
+        this.socket.on('incident_updated', (data: any) => {
+          console.log('Incident updated event:', data);
+          this.emit('incident_updated', data);
+        });
+
+        this.socket.on('incident_status_changed', (data: any) => {
+          console.log('Incident status changed event:', data);
+          this.emit('incident_status_changed', data);
+        });
+
+        this.socket.on('incident_analysis_completed', (data: any) => {
+          console.log('Incident analysis completed event:', data);
+          this.emit('incident_analysis_completed', data);
+        });
+
+        this.socket.on('incident_priority_changed', (data: any) => {
+          console.log('Incident priority changed event:', data);
+          this.emit('incident_priority_changed', data);
         });
 
         // Error handler

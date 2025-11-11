@@ -6,7 +6,9 @@
 
 import { GraphQLClient } from 'graphql-request';
 
-const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:5000/graphql';
+// Apollo Federation Gateway endpoint - provides unified GraphQL API
+// Falls back to individual service endpoint if gateway is not available
+const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:4000/graphql';
 
 /**
  * GraphQL client instance

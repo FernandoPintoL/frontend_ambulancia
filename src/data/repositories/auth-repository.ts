@@ -2,19 +2,14 @@
 /**
  * Auth Repository
  * Data Layer - Authentication API communication
+ *
+ * IMPORTANTE: Este repositorio usa el cliente Apollo Gateway compartido
+ * El Gateway expone los mutations/queries de autenticación federados
+ * No se conecta directamente a ms_autentificacion
  */
 
-import { GraphQLClient, gql } from 'graphql-request';
-
-// GraphQL Client para ms_autentificacion
-const authGraphQLClient = new GraphQLClient(
-  process.env.REACT_APP_AUTH_GRAPHQL_URL || 'http://localhost:8000/graphql',
-  {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  }
-);
+import { gql } from 'graphql-request';
+import { graphqlClient, updateGraphQLHeaders } from './graphql-client';
 
 // ============================================================
 // QUERIES
@@ -240,10 +235,17 @@ function extractErrorMessage(error: unknown): string {
 export const authRepository = {
   /**
    * Login con email y contraseña
+   *
+   * Flujo:
+   * 1. Frontend → Apollo Gateway (puerto 4000)
+   * 2. Apollo Gateway → ms_autentificacion (puerto 8000, interno)
+   * 3. ms_autentificacion retorna token Sanctum
+   * 4. Token se guarda en localStorage
+   * 5. Futuras requests incluyen token en Authorization header
    */
   async login(email: string, password: string): Promise<LoginResponse['login']> {
     try {
-      const response = await authGraphQLClient.request<LoginResponse>(
+      const response = await graphqlClient.request<LoginResponse>(
         LOGIN_MUTATION,
         { email, password }
       );
@@ -257,10 +259,11 @@ export const authRepository = {
 
   /**
    * Login con WhatsApp (número de teléfono)
+   * Mismo flujo que login() pero con numero de teléfono
    */
   async loginWhatsApp(phone: string): Promise<LoginWhatsAppResponse['loginWhatsApp']> {
     try {
-      const response = await authGraphQLClient.request<LoginWhatsAppResponse>(
+      const response = await graphqlClient.request<LoginWhatsAppResponse>(
         LOGIN_WHATSAPP_MUTATION,
         { phone }
       );
@@ -274,21 +277,20 @@ export const authRepository = {
 
   /**
    * Logout - revoca el token
+   *
+   * El token se envía en el header Authorization
+   * Apollo Gateway lo valida y lo pasa a ms_autentificacion
    */
   async logout(token: string): Promise<LogoutResponse['logout']> {
     try {
-      // Crear cliente con el token en el header
-      const clientWithAuth = new GraphQLClient(
-        process.env.REACT_APP_AUTH_GRAPHQL_URL || 'http://localhost:8000/graphql',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      // Actualizar headers del cliente compartido con el token
+      updateGraphQLHeaders({ Authorization: `Bearer ${token}` });
 
-      const response = await clientWithAuth.request<LogoutResponse>(LOGOUT_MUTATION);
+      const response = await graphqlClient.request<LogoutResponse>(LOGOUT_MUTATION);
+
+      // Limpiar el header después
+      updateGraphQLHeaders({ Authorization: '' });
+
       return response.logout;
     } catch (error) {
       const message = extractErrorMessage(error);
@@ -299,10 +301,13 @@ export const authRepository = {
 
   /**
    * Refrescar token
+   *
+   * Solicita un nuevo token al Gateway
+   * El Gateway valida el token antiguo contra ms_autentificacion
    */
   async refreshToken(token: string): Promise<RefreshTokenResponse['refreshToken']> {
     try {
-      const response = await authGraphQLClient.request<RefreshTokenResponse>(
+      const response = await graphqlClient.request<RefreshTokenResponse>(
         REFRESH_TOKEN_MUTATION,
         { token }
       );
@@ -316,20 +321,13 @@ export const authRepository = {
 
   /**
    * Validar token
+   *
+   * El token se envía como parámetro en la query
+   * Apollo Gateway lo valida contra ms_autentificacion
    */
   async validateToken(token: string) {
     try {
-      const clientWithAuth = new GraphQLClient(
-        process.env.REACT_APP_AUTH_GRAPHQL_URL || 'http://localhost:8000/graphql',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
-      const response = await clientWithAuth.request<any>(VALIDATE_TOKEN, { token });
+      const response = await graphqlClient.request<any>(VALIDATE_TOKEN, { token });
       return response.validateToken;
     } catch (error) {
       const message = extractErrorMessage(error);

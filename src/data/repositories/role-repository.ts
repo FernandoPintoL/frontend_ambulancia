@@ -2,11 +2,16 @@
 /**
  * Role Repository
  * Data Layer - Role and Permission Management
- * Communicates with ms_autentificacion microservice
+ *
+ * IMPORTANTE: Este repositorio usa el cliente Apollo Gateway compartido
+ * El Gateway expone las queries/mutations de roles y permisos federados
+ * No se conecta directamente a ms_autentificacion
+ *
+ * El token se maneja automáticamente por auth-store actualizando los headers globales
  */
 
-import { GraphQLClient } from 'graphql-request';
 import { gql } from 'graphql-request';
+import { graphqlClient, updateGraphQLHeaders } from './graphql-client';
 
 export interface Role {
   id: string;
@@ -19,25 +24,6 @@ export interface Permission {
   id: string;
   name: string;
   description?: string;
-}
-
-/**
- * Create an authenticated GraphQL client with the current auth token
- */
-export function getAuthenticatedGraphQLClient(): GraphQLClient {
-  const client = new GraphQLClient(
-    (process.env as any).REACT_APP_AUTH_GRAPHQL_URL || 'http://localhost:8000/graphql'
-  );
-
-  // Get token from localStorage
-  const token = localStorage.getItem('auth_token');
-  const tokenType = localStorage.getItem('auth_token_type') || 'Bearer';
-
-  if (token) {
-    client.setHeader('Authorization', `${tokenType} ${token}`);
-  }
-
-  return client;
 }
 
 // GraphQL Queries
@@ -69,11 +55,16 @@ const GET_PERMISSIONS = gql`
 class RoleRepository {
   /**
    * Get all roles with their permissions
+   *
+   * Flujo:
+   * 1. Frontend → Apollo Gateway (puerto 4000)
+   * 2. Apollo Gateway valida token contra ms_autentificacion (puerto 8000)
+   * 3. Apollo Gateway → ms_autentificacion (obtiene roles)
+   * 4. Response retorna al frontend
    */
   async getRoles(): Promise<Role[]> {
     try {
-      const client = getAuthenticatedGraphQLClient();
-      const response: any = await client.request(GET_ROLES);
+      const response: any = await graphqlClient.request(GET_ROLES);
       return response.roles || [];
     } catch (error) {
       console.error('Error fetching roles:', error);
@@ -83,11 +74,12 @@ class RoleRepository {
 
   /**
    * Get all permissions
+   *
+   * Mismo flujo que getRoles()
    */
   async getPermissions(): Promise<Permission[]> {
     try {
-      const client = getAuthenticatedGraphQLClient();
-      const response: any = await client.request(GET_PERMISSIONS);
+      const response: any = await graphqlClient.request(GET_PERMISSIONS);
       return response.permissions || [];
     } catch (error) {
       console.error('Error fetching permissions:', error);

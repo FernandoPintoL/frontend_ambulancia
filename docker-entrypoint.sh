@@ -1,19 +1,46 @@
 #!/bin/sh
 
-# Docker entrypoint script para inyectar variables de entorno en tiempo de ejecución
+# Script de entrada para Frontend - Inyecta variables de entorno en nginx
+# Este script reemplaza placeholders en nginx.conf con valores del ambiente
 
-# Crear archivo con variables de entorno para el frontend
-cat > /usr/share/nginx/html/env.js << EOF
-window.ENV = {
-  REACT_APP_GRAPHQL_URL: '${REACT_APP_GRAPHQL_URL:-http://localhost:4000/graphql}',
-  REACT_APP_AUTH_GRAPHQL_URL: '${REACT_APP_AUTH_GRAPHQL_URL:-http://localhost:8000/graphql}',
-  REACT_APP_API_URL: '${REACT_APP_API_URL:-http://localhost:5000/api/v1}',
-  REACT_APP_WS_URL: '${REACT_APP_WS_URL:-http://localhost:4004}',
-  REACT_APP_ENV: '${REACT_APP_ENV:-development}',
-  REACT_APP_LOG_LEVEL: '${REACT_APP_LOG_LEVEL:-debug}',
-  GOOGLE_API_KEY: '${GOOGLE_API_KEY:-}'
-};
-EOF
+set -e
 
-# Ejecutar el comando pasado como argumentos (nginx por defecto)
+echo "=================================="
+echo "Frontend Docker Entrypoint"
+echo "=================================="
+
+# Valores por defecto si no están definidos
+APOLLO_GATEWAY_URL="${APOLLO_GATEWAY_URL:-http://apollo-gateway:4000/graphql}"
+
+echo "📝 Variables de configuración:"
+echo "  APOLLO_GATEWAY_URL: $APOLLO_GATEWAY_URL"
+
+# Reemplazar variable en nginx.conf
+# Insertar la variable $apollo_gateway_url en la primera línea del bloque de nginx
+sed -i "1s|^|set \$apollo_gateway_url \"$APOLLO_GATEWAY_URL\";\n|" /etc/nginx/conf.d/default.conf
+
+# Crear directorio para variables de entorno
+mkdir -p /usr/share/nginx/html/env
+
+# Guardar la configuración en JSON para acceso desde frontend
+cat > /usr/share/nginx/html/env/config.json <<EOF2
+{
+  "REACT_APP_GRAPHQL_URL": "${REACT_APP_GRAPHQL_URL:-/graphql}",
+  "REACT_APP_WS_URL": "${REACT_APP_WS_URL:-ws://localhost:4004}",
+  "GOOGLE_API_KEY": "${GOOGLE_API_KEY:-}",
+  "APOLLO_GATEWAY_URL": "$APOLLO_GATEWAY_URL"
+}
+EOF2
+
+echo "✅ Configuración inyectada exitosamente"
+
+# Validar nginx
+if nginx -t; then
+    echo "✅ Configuración de nginx válida"
+else
+    echo "❌ Error en configuración de nginx"
+    exit 1
+fi
+
+echo "🚀 Iniciando nginx..."
 exec "$@"

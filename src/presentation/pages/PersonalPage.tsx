@@ -15,7 +15,7 @@ import PersonalStatusBadge from '../components/PersonalStatusBadge';
 import PersonalAccessForm, { PersonalAccessData } from '../components/PersonalAccessForm';
 import { Personal, CreatePersonalInput } from '../../data/repositories/personal-repository';
 import { capitalizeFirst } from '../../utils/string';
-import { getAuthenticatedGraphQLClient } from '../../data/repositories/role-repository';
+import { graphqlClient } from '../../data/repositories/graphql-client';
 import { CREATE_USER_FOR_PERSONAL } from '../../data/repositories/mutations';
 
 type ModalMode = 'create' | 'edit' | 'access' | null;
@@ -149,8 +149,7 @@ export default function PersonalPage() {
       setAccessLoading(true);
 
       // Crear usuario en el microservicio de autenticación (ms_autentificacion)
-      const authClient = getAuthenticatedGraphQLClient();
-      const response: any = await authClient.request(CREATE_USER_FOR_PERSONAL, {
+      const response: any = await graphqlClient.request(CREATE_USER_FOR_PERSONAL, {
         name: newPersonal.nombreCompleto,
         email: accessData.email,
         phone: newPersonal.telefono,

@@ -36,10 +36,10 @@ RUN mkdir -p /usr/share/nginx/html/env
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
+    CMD wget --quiet --tries=1 --spider http://localhost:8080 || exit 1
 
 # Exponer puerto
-EXPOSE 3000
+EXPOSE 8080
 
 # Script de inicio para inyectar variables de entorno
 COPY docker-entrypoint.sh /docker-entrypoint.sh

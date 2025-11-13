@@ -15,9 +15,8 @@ APOLLO_GATEWAY_URL="${APOLLO_GATEWAY_URL:-http://apollo-gateway:4000/graphql}"
 echo "📝 Variables de configuración:"
 echo "  APOLLO_GATEWAY_URL: $APOLLO_GATEWAY_URL"
 
-# Reemplazar variable en nginx.conf
-# Insertar la variable $apollo_gateway_url en la primera línea del bloque de nginx
-sed -i "1s|^|set \$apollo_gateway_url \"$APOLLO_GATEWAY_URL\";\n|" /etc/nginx/conf.d/default.conf
+# Reemplazar placeholder en nginx.conf
+sed -i "s|__APOLLO_GATEWAY_URL__|$APOLLO_GATEWAY_URL|g" /etc/nginx/conf.d/default.conf
 
 # Crear directorio para variables de entorno
 mkdir -p /usr/share/nginx/html/env

@@ -14,7 +14,10 @@ COPY public ./public
 COPY src ./src
 COPY tsconfig.json ./
 COPY postcss.config.js ./
-COPY .env ./
+
+# Usar .env.example para el build (valores por defecto)
+# Los valores reales se inyectarán en runtime por docker-entrypoint.sh
+COPY .env.example .env
 
 # Construir la aplicación
 RUN npm run build

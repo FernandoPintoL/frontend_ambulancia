@@ -2,37 +2,74 @@
 /**
  * GraphQL Client Configuration
  * Data Layer - API Communication
+ *
+ * IMPORTANTE: Usa getConfig() para obtener la URL de runtime
+ * Esto permite que funcione con variables de entorno inyectadas por Docker
  */
 
 import { GraphQLClient } from 'graphql-request';
+import { getConfig } from '../../config/runtime-config';
 
-// Apollo Federation Gateway endpoint - provides unified GraphQL API
-// Falls back to individual service endpoint if gateway is not available
-const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_URL || 'http://localhost:4000/graphql';
+let graphqlClientInstance: GraphQLClient | null = null;
 
 /**
- * GraphQL client instance
- * Handles all GraphQL requests to backend
+ * Inicializar el cliente GraphQL con la URL de runtime
+ * Se llama automáticamente por index.tsx antes de renderizar la app
  */
-export const graphqlClient = new GraphQLClient(GRAPHQL_ENDPOINT, {
-  headers: {
-    'Content-Type': 'application/json',
+export function initGraphQLClient(): GraphQLClient {
+  if (graphqlClientInstance) {
+    return graphqlClientInstance;
+  }
+
+  // Obtener URL de GraphQL desde configuración runtime (Docker o build)
+  const GRAPHQL_ENDPOINT = getConfig('REACT_APP_GRAPHQL_URL');
+
+  console.log(`📡 GraphQL Client inicializado con endpoint: ${GRAPHQL_ENDPOINT}`);
+
+  graphqlClientInstance = new GraphQLClient(GRAPHQL_ENDPOINT, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  return graphqlClientInstance;
+}
+
+/**
+ * Obtener cliente GraphQL (debe estar inicializado primero)
+ */
+export function getGraphQLClient(): GraphQLClient {
+  if (!graphqlClientInstance) {
+    console.error('❌ GraphQL Client no inicializado. Verifica que index.tsx llame a initializeConfig()');
+    throw new Error('GraphQL Client not initialized');
+  }
+  return graphqlClientInstance;
+}
+
+/**
+ * GraphQL client instance - retrocompatibilidad con código existente
+ * Usar getGraphQLClient() en su lugar
+ */
+export const graphqlClient = new Proxy({}, {
+  get: () => {
+    return getGraphQLClient();
   },
-  credentials: 'include',
-});
+}) as any;
 
 /**
  * Update GraphQL client headers (e.g., for authentication token)
  */
 export const updateGraphQLHeaders = (headers: Record<string, string>) => {
-  graphqlClient.setHeader('Authorization', headers.Authorization || '');
+  const client = getGraphQLClient();
+  client.setHeader('Authorization', headers.Authorization || '');
 };
 
 /**
  * Get current GraphQL endpoint
  */
 export const getGraphQLEndpoint = (): string => {
-  return GRAPHQL_ENDPOINT;
+  return getConfig('REACT_APP_GRAPHQL_URL');
 };
 
 export default graphqlClient;

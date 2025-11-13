@@ -23,6 +23,8 @@ async function bootstrap() {
     // Inicializar cliente GraphQL con la configuración cargada
     initGraphQLClient();
 
+    // WebSocket se inicializa lazy cuando se necesita (en App.tsx)
+
     const root = ReactDOM.createRoot(
       document.getElementById('root') as HTMLElement
     );

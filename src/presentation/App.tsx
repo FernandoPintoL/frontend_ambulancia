@@ -49,17 +49,30 @@ export default function App() {
 
   // Initialize WebSocket connection globally
   useEffect(() => {
-    const { websocketService } = require('../data/repositories/websocket-service');
+    const initWebSocket = async () => {
+      try {
+        const { websocketService } = require('../data/repositories/websocket-service');
 
-    // Connect to WebSocket
-    websocketService.connect().catch((error: any) => {
-      console.error('Failed to connect WebSocket:', error);
-    });
+        // Connect to WebSocket - but don't block if it fails
+        try {
+          await websocketService.connect();
+          console.log('✅ WebSocket conectado exitosamente');
+        } catch (wsError) {
+          console.warn('⚠️ WebSocket conexión falló, la app continuará sin tiempo real:', wsError);
+          // No lanzar error, dejar que la app continúe
+        }
 
-    // Initialize listeners for real-time updates
-    initializeWebSocketListeners();
-    initializeWebSocketListenersPersonal();
-    initializeWebSocketListenersIncidents();
+        // Initialize listeners for real-time updates
+        initializeWebSocketListeners();
+        initializeWebSocketListenersPersonal();
+        initializeWebSocketListenersIncidents();
+      } catch (error) {
+        console.error('Error initializing WebSocket:', error);
+        // Continuar sin WebSocket
+      }
+    };
+
+    initWebSocket();
   }, []);
 
   return (

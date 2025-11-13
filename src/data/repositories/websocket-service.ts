@@ -251,20 +251,27 @@ class WebSocketService {
   }
 }
 
-// Singleton instance - lazy initialization para permitir carga de config en runtime
+// Singleton instance - inicialización lazy
 let websocketServiceInstance: WebSocketService | null = null;
 
-export function getWebSocketService(): WebSocketService {
+/**
+ * Obtener o crear la instancia del servicio WebSocket
+ * Se inicializa lazy cuando se necesita por primera vez
+ */
+function getOrCreateInstance(): WebSocketService {
   if (!websocketServiceInstance) {
     websocketServiceInstance = new WebSocketService();
   }
   return websocketServiceInstance;
 }
 
-// Proxy para retrocompatibilidad con código existente
-export const websocketService = new Proxy({}, {
-  get: (target, prop) => {
-    const service = getWebSocketService();
-    return (service as any)[prop];
-  },
-}) as any;
+// Singleton instance - retrocompatible con código existente
+export const websocketService = {
+  connect: () => getOrCreateInstance().connect(),
+  subscribe: (event: any, handler: any) =>
+    getOrCreateInstance().subscribe(event, handler),
+  send: (event: string, data: any) =>
+    getOrCreateInstance().send(event, data),
+  disconnect: () => getOrCreateInstance().disconnect(),
+  isConnected: () => getOrCreateInstance().isConnected(),
+} as any;

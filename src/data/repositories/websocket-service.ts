@@ -2,9 +2,12 @@
 /**
  * WebSocket Service
  * Real-time updates using Socket.IO for dispatch status, ambulance location, and personal updates
+ *
+ * IMPORTANTE: Usa getConfig() para obtener la URL de runtime desde Docker
  */
 
 import { io, Socket } from 'socket.io-client';
+import { getConfig } from '../../config/runtime-config';
 
 type WebSocketEventHandler = (data: any) => void;
 type WebSocketEventType =
@@ -35,9 +38,20 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
 
   constructor(url?: string) {
-    // Get URL from environment variable or parameter or fallback
-    const envUrl = process.env.REACT_APP_WS_URL;
-    this.url = url || envUrl || 'http://localhost:4004';
+    // Get URL from parameter, runtime config (Docker), or fallback
+    let wsUrl = url;
+
+    if (!wsUrl) {
+      try {
+        // Intenta obtener desde la configuración de runtime (Docker)
+        wsUrl = getConfig('REACT_APP_WS_URL');
+      } catch (error) {
+        // Si no está disponible, fallback a localhost
+        wsUrl = 'http://localhost:4004';
+      }
+    }
+
+    this.url = wsUrl;
     console.log('WebSocket URL initialized:', this.url);
     this.initializeListeners();
   }
@@ -237,5 +251,20 @@ class WebSocketService {
   }
 }
 
-// Singleton instance
-export const websocketService = new WebSocketService();
+// Singleton instance - lazy initialization para permitir carga de config en runtime
+let websocketServiceInstance: WebSocketService | null = null;
+
+export function getWebSocketService(): WebSocketService {
+  if (!websocketServiceInstance) {
+    websocketServiceInstance = new WebSocketService();
+  }
+  return websocketServiceInstance;
+}
+
+// Proxy para retrocompatibilidad con código existente
+export const websocketService = new Proxy({}, {
+  get: (target, prop) => {
+    const service = getWebSocketService();
+    return (service as any)[prop];
+  },
+}) as any;

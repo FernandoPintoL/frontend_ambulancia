@@ -9,17 +9,19 @@ COPY package*.json ./
 # Instalar dependencias (con --legacy-peer-deps para resolver conflictos de TypeScript)
 RUN npm ci --legacy-peer-deps
 
-# Copiar código fuente
+# Copiar código fuente y configuración
 COPY public ./public
 COPY src ./src
 COPY tsconfig.json ./
 COPY postcss.config.js ./
+COPY tailwind.config.js ./
 
 # Usar .env.example para el build (valores por defecto)
 # Los valores reales se inyectarán en runtime por docker-entrypoint.sh
 COPY .env.example .env
 
 # Construir la aplicación
+# Asegurar que se cree el build completamente (no use caché)
 RUN npm run build
 
 # Stage 2: Runtime (Nginx)
